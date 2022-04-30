@@ -34,7 +34,7 @@ class UsersRegisterTest(BaseViewTest):
             }]
         ]
     )
-    def test_suc(self, data):
+    def test_post(self, data):
         def check_id(id):
             self.assert_model(
                 User, data | {
@@ -42,13 +42,12 @@ class UsersRegisterTest(BaseViewTest):
                     'is_active': False, 'type': UserType.DEFAULT.value,
                     'first_name': data.get('first_name'),
                     'last_name': data.get('last_name')
-                },
-                id=id
+                }, id=id
             )
         
         self._test('post', {'id': check_id}, data)
     
-    def test_409(self):
+    def test_warn_409(self):
         email = self.fake.email()
         UserFactory(email=email)
         self._test_api_exception(

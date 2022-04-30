@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   db:
-    image: postgres:13
+    image: postgres:14.2
     volumes:
       - db_volume:/var/lib/postgresql/data
     ports:
@@ -17,7 +17,7 @@ services:
       - db_network
     restart: unless-stopped
   redis:
-    image: redis:6.2.6
+    image: redis:7.0.0
     networks:
       - redis_network
     restart: unless-stopped
@@ -28,6 +28,9 @@ services:
         python manage.py collectstatic --noinput &&
         gunicorn api.wsgi -c gunicorn_conf.py
       "
+    environment:
+      - DATABASE_URL=psql://user:password@db:5432/db
+      - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env
     volumes:

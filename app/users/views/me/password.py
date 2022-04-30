@@ -8,7 +8,7 @@ from app.users.views.base import BaseAuthView
 
 
 class UsersMePasswordView(UpdateModelMixin, BaseAuthView):
-    serializer_class_map = {'put': PutUsersMePasswordSerializer}
+    serializer_map = {'put': PutUsersMePasswordSerializer}
     
     @response_204
     def put(self, request):

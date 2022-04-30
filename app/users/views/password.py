@@ -20,7 +20,7 @@ PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
 class UsersPasswordView(BaseView):
-    serializer_class_map = {
+    serializer_map = {
         'post': PostUsersPasswordSerializer, 'put': PutUsersPasswordSerializer
     }
     

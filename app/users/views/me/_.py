@@ -5,7 +5,7 @@ from app.users.views.base import BaseAuthView
 
 
 class UsersMeView(RetrieveModelMixin, UpdateModelMixin, BaseAuthView):
-    serializer_class_map = {'get': GetUsersMeSerializer, 'patch': PatchUsersMeSerializer}
+    serializer_map = {'get': GetUsersMeSerializer, 'patch': PatchUsersMeSerializer}
     
     def get(self, request):
         return self.retrieve(request)

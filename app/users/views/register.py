@@ -20,7 +20,7 @@ ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 
 class UsersRegisterView(CreateModelMixin, BaseView):
-    serializer_class_map = {'post': PostUsersRegisterSerializer}
+    serializer_map = {'post': PostUsersRegisterSerializer}
     
     @extend_schema(
         responses={
@@ -31,7 +31,7 @@ class UsersRegisterView(CreateModelMixin, BaseView):
             )
         }
     )
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         email, code = request.query_params.get('email'), request.query_params.get('code')
         if email is None or code is None:
             return HttpResponseRedirect(ACTIVATE_FAILURE_URL)
@@ -57,7 +57,7 @@ class UsersRegisterView(CreateModelMixin, BaseView):
 
 
 class UsersRegisterResendView(BaseView):
-    serializer_class_map = {'post': PostUsersRegisterResendSerializer}
+    serializer_map = {'post': PostUsersRegisterResendSerializer}
     
     @response_204
     def post(self, request):

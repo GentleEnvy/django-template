@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from app.base.exceptions.base import APIException
 from app.base.tests.base import BaseTest
 from app.users.models import User
+from app.users.tests.factories.token import TokenFactory
 from app.users.tests.factories.users import UserFactory
 
 
@@ -28,10 +29,13 @@ class BaseViewTest(BaseTest):
     def me(self, me):
         self._me = me
         self.client.force_login(self.me)
+        self.me.token = TokenFactory(user=self.me)
     
     @me.deleter
     def me(self):
         self.client.logout()
+        self._me.token.delete()
+        self._me.delete()
         self._me = None
     
     def get(self, path=None, query=None):
@@ -51,7 +55,7 @@ class BaseViewTest(BaseTest):
     
     def assert_response(self, response, status=200, data: dict = None):
         self.assert_equal(response.status_code, status)
-        self.assert_json(response.json(), data)
+        self.assert_json(response.json() if response.content else {}, data or {})
     
     def _test(
         self, method: str, exp_data: dict[str, Any] = None, data: dict[str, Any] = None,
