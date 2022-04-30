@@ -1,7 +1,7 @@
 ---
 name: Custom
-about: Create a custom issue.
-title: 'Issue'
+about: Issue без шаблона
+title: ''
 labels: ''
 assignees: 'GentleEnvy'
 
