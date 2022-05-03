@@ -5,21 +5,12 @@ from rest_framework.mixins import CreateModelMixin
 
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
-from app.users.controllers.register import (
-    GET_UsersRegisterController, POST_UsersRegisterController
-)
-from app.users.serializers.register import POST_UsersRegisterSerializer
 
 ACTIVATE_SUCCESS_URL = settings.VERIFICATION_ACTIVATE_SUCCESS_URL
 ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 
 class UsersRegisterView(CreateModelMixin, BaseView):
-    serializer_map = {'post': POST_UsersRegisterSerializer}
-    controller_map = {
-        'get': GET_UsersRegisterController, 'post': POST_UsersRegisterController
-    }
-    
     @extend_schema(
         responses={
             200: None, 302: OpenApiResponse(

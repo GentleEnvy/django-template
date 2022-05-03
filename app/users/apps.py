@@ -1,5 +1,5 @@
-from django.apps import AppConfig
+from app.base.apps.base import BaseApp
 
 
-class UsersConfig(AppConfig):
+class UsersConfig(BaseApp):
     name = 'app.users'

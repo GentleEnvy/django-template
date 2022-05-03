@@ -8,9 +8,6 @@ from app.base.utils.common import response_204
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
 from app.users.models import User
-from app.users.serializers.password import (
-    POST_UsersPasswordSerializer, PUT_UsersPasswordSerializer
-)
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
 from app.users.services.password_session import PasswordSessionService
@@ -20,10 +17,6 @@ PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
 class UsersPasswordView(BaseView):
-    serializer_map = {
-        'post': POST_UsersPasswordSerializer, 'put': PUT_UsersPasswordSerializer
-    }
-    
     @extend_schema(
         responses={
             200: None, 302: OpenApiResponse(
