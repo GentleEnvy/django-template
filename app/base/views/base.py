@@ -114,9 +114,9 @@ class BaseView(GenericAPIView):
             setattr(cls, method_name, extend_schema(responses=responses)(method))
     
     @classmethod
-    def as_view(cls, **initkwargs):
+    def as_view(cls, **init_kwargs):
         cls._to_schema()
-        return csrf_exempt(super().as_view(**initkwargs))
+        return csrf_exempt(super().as_view(**init_kwargs))
     
     def handle_exception(self, exception):
         return _exception_handler(exception)
@@ -127,7 +127,7 @@ class BaseView(GenericAPIView):
             raise exceptions.NotAuthenticated()
         raise exceptions.PermissionDenied(detail=message, code=code)
     
-    def _create_serializer(self) -> serializers.Serializer:
+    def _create_serializer(self):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         return serializer
@@ -135,13 +135,15 @@ class BaseView(GenericAPIView):
     def _create_controller(self):
         return self.controller_map.get(self.method, BaseController)(self)
     
-    def _create_response(self, result_data: dict):
+    def _create_response(self, result_data):
+        self.serializer.instance = result_data
         return Response(
-            result_data, status=204 if not result_data else status_by_method(self.method)
+            self.serializer.data,
+            status=204 if not result_data else status_by_method(self.method)
         )
     
     def handle(self):
         self.serializer = self._create_serializer()
         self.controller = self._create_controller()
-        data = self.controller.dataclass(self.serializer.validated_data)
+        data = self.controller.dataclass(**self.serializer.validated_data)
         return self._create_response(self.controller.control(data))

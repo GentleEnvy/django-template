@@ -9,7 +9,7 @@ from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
 from app.users.models import User
 from app.users.serializers.password import (
-    PostUsersPasswordSerializer, PutUsersPasswordSerializer
+    POST_UsersPasswordSerializer, PUT_UsersPasswordSerializer
 )
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
@@ -21,7 +21,7 @@ PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 class UsersPasswordView(BaseView):
     serializer_map = {
-        'post': PostUsersPasswordSerializer, 'put': PutUsersPasswordSerializer
+        'post': POST_UsersPasswordSerializer, 'put': PUT_UsersPasswordSerializer
     }
     
     @extend_schema(
@@ -37,7 +37,7 @@ class UsersPasswordView(BaseView):
         email, code = request.query_params.get('email'), request.query_params.get('code')
         if email is None or code is None:
             return HttpResponseRedirect(PASSWORD_FAILURE_URL)
-        is_confirmed, _ = EmailVerificationService(scope='password').check(email, code)
+        is_confirmed = EmailVerificationService(scope='password').check(email, code)
         if is_confirmed:
             session_service = PasswordSessionService()
             session_id = session_service.create(email)

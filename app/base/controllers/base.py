@@ -7,12 +7,15 @@ class BaseController:
     def __init__(self, view: 'base.BaseView'):
         self.view = view
         for service_name, service_class in getattr(self, '__annotations__', {}).items():
-            if not hasattr(self, service_name):
-                setattr(self, service_name, service_class())
+            if service_class.__name__.endswith('Service'):
+                if (service_args := getattr(self, service_name, None)) is None:
+                    setattr(self, service_name, service_class())
+                else:
+                    setattr(self, service_name, service_class(**service_args))
     
     @property
     def dataclass(self) -> Callable[[dict], Any]:
-        return lambda data: data
+        return lambda **data: data
     
-    def control(self, data) -> dict[str, Any]:
-        return self.view.serializer.data
+    def control(self, data):
+        return self.view.serializer.instance

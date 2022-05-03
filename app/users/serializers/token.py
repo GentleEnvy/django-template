@@ -7,7 +7,7 @@ from app.users.models import User
 from app.users.models.choices import UserType
 
 
-class PostUsersTokenSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
+class POST_UsersTokenSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)
     
     WARNINGS = {
@@ -38,11 +38,11 @@ class PostUsersTokenSerializer(SerializerSchemaMixin, serializers.ModelSerialize
                 user = User.objects.get(email=email)
             except User.DoesNotExist:
                 raise self.WARNINGS[404]
-            if not user.check_password(password):
-                raise self.WARNINGS[401]
-            if user.type == UserType.BANNED:
-                raise self.WARNINGS[410]
-            if not user.is_active:
-                raise self.WARNINGS[406]
+        if not user.check_password(password):
+            raise self.WARNINGS[401]
+        if user.type == UserType.BANNED:
+            raise self.WARNINGS[410]
+        if not user.is_active:
+            raise self.WARNINGS[406]
         self.instance = user
         return attrs
