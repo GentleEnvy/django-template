@@ -10,6 +10,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 
+from app.base.controllers.base import BaseController
 from app.base.exceptions import *
 from app.base.permissions.base import BasePermission
 from app.base.schemas.mixins import SerializerSchemaMixin, ViewSchemaMixin
@@ -21,6 +22,7 @@ __all__ = ['BaseView']
 
 _TypeSerializer = Type[serializers.Serializer]
 _TypePermission = Type[BasePermission]
+_TypeController = Type[BaseController]
 
 
 def _exception_handler(exception):
@@ -56,8 +58,12 @@ class BaseView(GenericAPIView):
     lookup_field = 'id'
     ordering = 'id'
     serializer_class = EmptySerializer
-    serializer_class_map: dict[str, tuple[int, _TypeSerializer] | _TypeSerializer] = {}
-    permission_classes_map: dict[str, list[_TypePermission] | tuple[_TypePermission]] = {}
+    serializer_map: dict[str, tuple[int, _TypeSerializer] | _TypeSerializer] = {}
+    permissions_map: dict[str, list[_TypePermission] | tuple[_TypePermission]] = {}
+    controller_map: dict[str, _TypeController] = {}
+    
+    serializer: serializers.Serializer = None
+    controller: BaseController = None
     
     @property
     def method(self) -> str:
@@ -67,7 +73,7 @@ class BaseView(GenericAPIView):
     def _extract_serializer_class_with_status(
         cls, method_name: str
     ) -> tuple[int, _TypeSerializer] | None:
-        serializer_class = cls.serializer_class_map.get(method_name)
+        serializer_class = cls.serializer_map.get(method_name)
         if serializer_class and issubclass(serializer_class, serializers.Serializer):
             status = status_by_method(method_name)
             return status, serializer_class
@@ -80,7 +86,7 @@ class BaseView(GenericAPIView):
         return serializer_class[1]
     
     def get_permissions(self):
-        permission_classes = self.permission_classes_map.get(self.method)
+        permission_classes = self.permissions_map.get(self.method)
         if permission_classes is None:
             return super().get_permissions()
         if isinstance(permission_classes, list):
@@ -108,9 +114,9 @@ class BaseView(GenericAPIView):
             setattr(cls, method_name, extend_schema(responses=responses)(method))
     
     @classmethod
-    def as_view(cls, **initkwargs):
+    def as_view(cls, **init_kwargs):
         cls._to_schema()
-        return csrf_exempt(super().as_view(**initkwargs))
+        return csrf_exempt(super().as_view(**init_kwargs))
     
     def handle_exception(self, exception):
         return _exception_handler(exception)
@@ -120,3 +126,24 @@ class BaseView(GenericAPIView):
             getattr(request, 'on_auth_fail', lambda: None)()
             raise exceptions.NotAuthenticated()
         raise exceptions.PermissionDenied(detail=message, code=code)
+    
+    def _create_serializer(self):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        return serializer
+    
+    def _create_controller(self):
+        return self.controller_map.get(self.method, BaseController)(self)
+    
+    def _create_response(self, result_data):
+        self.serializer.instance = result_data
+        return Response(
+            self.serializer.data,
+            status=204 if not result_data else status_by_method(self.method)
+        )
+    
+    def handle(self):
+        self.serializer = self._create_serializer()
+        self.controller = self._create_controller()
+        data = self.controller.dataclass(**self.serializer.validated_data)
+        return self._create_response(self.controller.control(data))

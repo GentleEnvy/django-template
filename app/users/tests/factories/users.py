@@ -1,6 +1,7 @@
 import factory
 from django.contrib.auth.hashers import make_password
 
+from app.base.tests.fakers import Faker
 from app.users.models import User
 
 
@@ -10,10 +11,10 @@ class UserFactory(factory.django.DjangoModelFactory):
     
     raw_password: str
     
-    first_name = factory.Faker('first_name')
-    last_name = factory.Faker('last_name')
-    email = factory.Faker('email')
-    password = factory.Faker('password')
+    first_name = Faker('first_name')
+    last_name = Faker('last_name')
+    email = Faker('email')
+    password = Faker('password')
     is_active = True
     
     @classmethod

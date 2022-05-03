@@ -1,21 +1,22 @@
-from rest_framework.response import Response
-
 from app.base.utils.common import response_204
 from app.base.views.base import BaseView
+from app.users.controllers.token import (
+    POST_UsersTokenController, DELETE_UsersTokenController
+)
 from app.users.permissions import IsAuthenticatedPermission
-from app.users.serializers.token import PostUsersTokenSerializer
-from app.users.services.auth import AuthService
+from app.users.serializers.token import POST_UsersTokenSerializer
 
 
 class UsersTokenView(BaseView):
-    serializer_class_map = {'post': PostUsersTokenSerializer}
-    permission_classes_map = {'delete': [IsAuthenticatedPermission]}
+    serializer_map = {'post': POST_UsersTokenSerializer}
+    permissions_map = {'delete': [IsAuthenticatedPermission]}
+    controller_map = {
+        'post': POST_UsersTokenController, 'delete': DELETE_UsersTokenController
+    }
     
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=201)
+    def post(self, _):
+        return self.handle()
     
     @response_204
-    def delete(self, request):
-        AuthService(request).logout()
+    def delete(self, _):
+        self.handle()

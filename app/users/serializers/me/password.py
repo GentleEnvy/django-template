@@ -6,19 +6,20 @@ from app.base.exceptions import APIWarning
 from app.base.schemas.mixins import SerializerSchemaMixin
 
 
-class PutUsersMePasswordSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
+class PUT_UsersMePasswordSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
     WARNINGS = {403: APIWarning('Неверный старый пароль', 403, 'invalid_old_password')}
     
-    old_password = serializers.CharField(max_length=128, write_only=True)
-    new_password = serializers.CharField(max_length=128, write_only=True)
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
     
     class Meta:
         model = User
-        fields = ['old_password', 'new_password']
+        fields = ['id', 'old_password', 'new_password']
     
     def validate(self, attrs):
         user = self.instance
         validate_password(attrs['new_password'])
+        print(user.check_password(attrs['old_password']))
         if not user.check_password(attrs['old_password']):
             raise self.WARNINGS[403]
         return attrs
