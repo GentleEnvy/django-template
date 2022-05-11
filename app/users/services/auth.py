@@ -25,9 +25,5 @@ class AuthService:
             logout(self.request)
     
     @classmethod
-    def user_by_token(cls, token: str) -> User | None:
-        return User.objects.filter(auth_token__key=token).first()
-    
-    @classmethod
     def delete_token(cls, user) -> None:
         Token.objects.filter(user=user).delete()

@@ -20,7 +20,8 @@ from app.base.utils.schema import extend_schema
 
 __all__ = ['BaseView']
 
-_TypeSerializer = Type[serializers.Serializer]
+_SerializerType = serializers.Serializer | SerializerSchemaMixin
+_TypeSerializer = Type[_SerializerType]
 _TypePermission = Type[BasePermission]
 _TypeController = Type[BaseController]
 
@@ -62,7 +63,7 @@ class BaseView(GenericAPIView):
     permissions_map: dict[str, list[_TypePermission] | tuple[_TypePermission]] = {}
     controller_map: dict[str, _TypeController] = {}
     
-    serializer: serializers.Serializer = None
+    serializer: _SerializerType = None
     controller: BaseController = None
     
     @property

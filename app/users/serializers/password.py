@@ -27,10 +27,13 @@ class POST_UsersPasswordSerializer(serializers.ModelSerializer):
 class PUT_UsersPasswordSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
     WARNINGS = {408: APIWarning('Сессия просрочена', 408, 'password_session_time_out')}
     
-    session = serializers.CharField(write_only=True)
+    session_id = serializers.CharField(write_only=True)
     token = serializers.CharField(read_only=True)
     
     class Meta:
         model = User
-        extra_kwargs = {'session': {}, 'password': {'write_only': True}, 'token': {}}
+        extra_kwargs = {
+            'session_id': {}, 'new_password': {'write_only': True, 'source': 'password'},
+            'token': {}
+        }
         fields = list(extra_kwargs.keys())
