@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import EnumMeta, unique
-from typing import Type
+from typing import Iterable, Type
 
 from django.db.models import (
     TextChoices as _TextChoices, IntegerChoices as _IntegerChoices
@@ -30,13 +30,14 @@ class _BaseChoicesMeta(ChoicesMeta):
         self.dict_by_name = self._member_map_
         self.label = property(lambda self_: self._value2label_map_.get(self_.value))
         self.help_text = self.__help_text()
+        # noinspection PyTypeChecker
         return unique(self)
     
     @classmethod
     def _parse(cls, index, key, value):
         raise NotImplementedError
     
-    def __help_text(self) -> str:
+    def __help_text(self: Iterable) -> str:
         transcripts = []
         for member in self:
             if member.name.lower() == member.label.lower():
@@ -97,4 +98,5 @@ class IntegerChoices(_IntegerChoices, metaclass=_IntegerChoicesMeta):
     dict_by_value: dict[int, IntegerChoices]
 
 
-IntegerChoices: Type[_IntegerChoices | IntegerChoices]
+TextChoices: Type[_TextChoices | TextChoices | str]
+IntegerChoices: Type[_IntegerChoices | IntegerChoices | int]

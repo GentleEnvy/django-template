@@ -1,3 +1,4 @@
+import datetime
 from typing import Callable, Final
 
 from factory import Faker as _FactoryFaker
@@ -9,6 +10,7 @@ class SubFaker(_Faker):
     last_name: Callable[..., str]
     password: Callable[..., str]
     email: Callable[..., str]
+    future_date: Callable[..., datetime.date]
     
     def random_string(self, length: int = 10):
         letters_count = self.random_int(max=length)

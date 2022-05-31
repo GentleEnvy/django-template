@@ -21,7 +21,7 @@ class GET_UsersRegisterController(BaseController):
         email: str
         code: str
     
-    def dataclass(self):
+    def dto(self):
         try:
             return self._dataclass(
                 **{k: v for k, v in self.view.request.query_params.items()}
@@ -32,7 +32,6 @@ class GET_UsersRegisterController(BaseController):
     def control(self, data: _dataclass):
         if data is None:
             return ACTIVATE_FAILURE_URL
-        print(data)
         if self.email_verification.check(data.email, data.code):
             try:
                 user = User.objects.get(email=data.email)
@@ -49,13 +48,13 @@ class POST_UsersRegisterController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'register'}
     
     @dataclasses.dataclass
-    class dataclass:
+    class dto:
         email: str
         password: str
         first_name: str | None = dataclasses.field(default=None)
         last_name: str | None = dataclasses.field(default=None)
     
-    def control(self, data: dataclass):
+    def control(self, data: dto):
         data.password = make_password(data.password)
         user = self.view.serializer.create(data.__dict__ | {'is_active': False})
         self.email_verification.send(

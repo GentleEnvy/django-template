@@ -146,5 +146,5 @@ class BaseView(GenericAPIView):
     def handle(self):
         self.serializer = self._create_serializer()
         self.controller = self._create_controller()
-        data = self.controller.dataclass(**self.serializer.validated_data)
+        data = self.controller.dto(**self.serializer.validated_data)
         return self._create_response(self.controller.control(data))
