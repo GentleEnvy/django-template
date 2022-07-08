@@ -3,9 +3,9 @@ import dataclasses
 from django.conf import settings
 from templated_mail.mail import BaseEmailMessage
 
-from app.base.controllers.base import BaseController
-from app.base.entities.base import BaseEntity
-from app.base.exceptions import EntityValidationError
+from app.base.actions.base import BaseAction
+from app.base.dtos.base import BaseDTO
+from app.base.exceptions import DTOValidationError
 from app.users.models import User
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
@@ -15,39 +15,43 @@ PASSWORD_SUCCESS_URL = settings.VERIFICATION_PASSWORD_SUCCESS_URL
 PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
-class GET_UsersPasswordController(BaseController):
-    email_verification: EmailVerificationService = {'scope': 'password'}
-    password_session: PasswordSessionService
+class GET_UsersPasswordAction(BaseAction):
+    def __init__(self, view):
+        super().__init__(view)
+        self.email_verification = EmailVerificationService(scope='password')
+        self.password_session = PasswordSessionService()
 
     @dataclasses.dataclass
-    class _dataclass(BaseEntity):
+    class DTO(BaseDTO):
         email: str
         code: str
 
-    def dto(self) -> _dataclass | None:
+    def dto(self) -> DTO | None:
         query_params = self.view.request.query_params
         try:
-            return self._dataclass(
+            return self.DTO(
                 email=query_params.get('email'), code=query_params.get('code')
             )
-        except (TypeError, EntityValidationError):
+        except (TypeError, DTOValidationError):
             return None
 
-    def control(self, data: _dataclass | None):
+    def run(self, data: DTO | None):
         if data is not None and self.email_verification.check(data.email, data.code):
             session_id = self.password_session.create(data.email)
             return PASSWORD_SUCCESS_URL % session_id
         return PASSWORD_FAILURE_URL
 
 
-class POST_UsersPasswordController(BaseController):
-    email_verification: EmailVerificationService = {'scope': 'password'}
+class POST_UsersPasswordAction(BaseAction):
+    def __init__(self, view):
+        super().__init__(view)
+        self.email_verification = EmailVerificationService(scope='password')
 
     @dataclasses.dataclass
-    class dto(BaseEntity):
+    class dto(BaseDTO):
         email: str
 
-    def control(self, data: dto):
+    def run(self, data: dto):
         self.email_verification.send(
             BaseEmailMessage(
                 request=self.view.request,
@@ -57,16 +61,18 @@ class POST_UsersPasswordController(BaseController):
         )
 
 
-class PUT_UsersPasswordController(BaseController):
-    email_verification: EmailVerificationService = {'scope': 'password'}
-    password_session: PasswordSessionService
+class PUT_UsersPasswordAction(BaseAction):
+    def __init__(self, view):
+        super().__init__(view)
+        self.email_verification = EmailVerificationService(scope='password')
+        self.password_session = PasswordSessionService()
 
     @dataclasses.dataclass
-    class dto(BaseEntity):
+    class dto(BaseDTO):
         session_id: str
         password: str
 
-    def control(self, data: dto):
+    def run(self, data: dto):
         if (email := self.password_session.check(data.session_id)) is None:
             raise self.view.serializer.WARNINGS[408]
         user = User.objects.get(email=email)

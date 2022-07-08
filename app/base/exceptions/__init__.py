@@ -1,4 +1,4 @@
 from .client import *
 from .critical import *
-from .entity import *
+from .dto import *
 from .warning import *

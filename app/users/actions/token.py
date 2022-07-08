@@ -1,9 +1,9 @@
-from app.base.controllers.base import BaseController
+from app.base.actions.base import BaseAction
 from app.users.services.auth import AuthService
 
 
-class POST_UsersTokenController(BaseController):
-    def control(self, data):
+class POST_UsersTokenAction(BaseAction):
+    def run(self, data):
         return {
             'token': AuthService(
                 self.view.request, self.view.serializer.instance
@@ -11,6 +11,6 @@ class POST_UsersTokenController(BaseController):
         }
 
 
-class DELETE_UsersTokenController(BaseController):
-    def control(self, data):
+class DELETE_UsersTokenAction(BaseAction):
+    def run(self, data):
         AuthService(self.view.request).logout()

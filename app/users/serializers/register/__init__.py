@@ -1,1 +1,1 @@
-from ._ import *
+from .general import *

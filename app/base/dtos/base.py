@@ -4,19 +4,19 @@ from dataclasses import asdict, dataclass
 
 from validated_dc import ValidatedDC
 
-from app.base.exceptions import EntityValidationError
+from app.base.exceptions import DTOValidationError
 from app.base.models.base import AbstractModel
 
 
 @dataclass
-class BaseEntity(ValidatedDC):
+class BaseDTO(ValidatedDC):
     def __post_init__(self):
         self._run_validation()
         if errors := self.get_errors():
-            raise EntityValidationError(errors)
+            raise DTOValidationError(errors)
 
     @classmethod
-    def from_model(cls, instance: AbstractModel, **fields_map: str) -> BaseEntity:
+    def from_model(cls, instance: AbstractModel, **fields_map: str) -> BaseDTO:
         data = {}
         # noinspection PyUnresolvedReferences
         for field_name in cls.__dataclass_fields__:

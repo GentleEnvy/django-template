@@ -5,12 +5,24 @@ from drf_spectacular.utils import OpenApiResponse
 from app.base.utils.common import response_204
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
+from app.users.serializers.password import *
+from app.users.actions.password import *
 
 PASSWORD_SUCCESS_URL = settings.VERIFICATION_PASSWORD_SUCCESS_URL
 PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
 class UsersPasswordView(BaseView):
+    serializer_map = {
+        'post': POST_UsersPasswordSerializer,
+        'put': PUT_UsersPasswordSerializer,
+    }
+    action_map = {
+        'get': GET_UsersPasswordAction,
+        'post': POST_UsersPasswordAction,
+        'put': PUT_UsersPasswordAction,
+    }
+
     @extend_schema(
         responses={
             200: None,

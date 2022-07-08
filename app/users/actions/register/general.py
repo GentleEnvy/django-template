@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from templated_mail.mail import BaseEmailMessage
 
-from app.base.controllers.base import BaseController
+from app.base.actions.base import BaseAction
 from app.users.models import User
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
@@ -13,23 +13,23 @@ ACTIVATE_SUCCESS_URL = settings.VERIFICATION_ACTIVATE_SUCCESS_URL
 ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 
-class GET_UsersRegisterController(BaseController):
-    email_verification: EmailVerificationService = {'scope': 'register'}
+class GET_UsersRegisterAction(BaseAction):
+    def __init__(self, view):
+        super().__init__(view)
+        self.email_verification = EmailVerificationService(scope='register')
 
     @dataclasses.dataclass
-    class _dataclass:
+    class DTO:
         email: str
         code: str
 
     def dto(self):
         try:
-            return self._dataclass(
-                **{k: v for k, v in self.view.request.query_params.items()}
-            )
+            return self.DTO(**{k: v for k, v in self.view.request.query_params.items()})
         except TypeError:
             return None
 
-    def control(self, data: _dataclass):
+    def run(self, data: DTO):
         if data is None:
             return ACTIVATE_FAILURE_URL
         if self.email_verification.check(data.email, data.code):
@@ -44,8 +44,10 @@ class GET_UsersRegisterController(BaseController):
         return ACTIVATE_FAILURE_URL
 
 
-class POST_UsersRegisterController(BaseController):
-    email_verification: EmailVerificationService = {'scope': 'register'}
+class POST_UsersRegisterAction(BaseAction):
+    def __init__(self, view):
+        super().__init__(view)
+        self.email_verification = EmailVerificationService(scope='register')
 
     @dataclasses.dataclass
     class dto:
@@ -54,7 +56,7 @@ class POST_UsersRegisterController(BaseController):
         first_name: str | None = dataclasses.field(default=None)
         last_name: str | None = dataclasses.field(default=None)
 
-    def control(self, data: dto):
+    def run(self, data: dto):
         data.password = make_password(data.password)
         user = self.view.serializer.create(data.__dict__ | {'is_active': False})
         self.email_verification.send(

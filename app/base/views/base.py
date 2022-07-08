@@ -10,7 +10,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 
-from app.base.controllers.base import BaseController
+from app.base.actions.base import BaseAction
 from app.base.exceptions import *
 from app.base.permissions.base import BasePermission
 from app.base.schemas.mixins import SerializerSchemaMixin, ViewSchemaMixin
@@ -23,7 +23,6 @@ __all__ = ['BaseView']
 _SerializerType = serializers.Serializer | SerializerSchemaMixin
 _TypeSerializer = Type[_SerializerType]
 _TypePermission = Type[BasePermission]
-_TypeController = Type[BaseController]
 
 
 def _exception_handler(exception):
@@ -61,10 +60,8 @@ class BaseView(GenericAPIView):
     serializer_class = EmptySerializer
     serializer_map: dict[str, tuple[int, _TypeSerializer] | _TypeSerializer] = {}
     permissions_map: dict[str, list[_TypePermission] | tuple[_TypePermission]] = {}
-    controller_map: dict[str, _TypeController] = {}
-
+    action_map: dict[str, Type[BaseAction]] = {}
     serializer: _SerializerType = None
-    controller: BaseController = None
 
     @property
     def method(self) -> str:
@@ -133,8 +130,8 @@ class BaseView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return serializer
 
-    def _create_controller(self):
-        return self.controller_map.get(self.method, BaseController)(self)
+    def _create_action(self):
+        return self.action_map.get(self.method, BaseAction)(self)
 
     def _create_response(self, result_data):
         self.serializer.instance = result_data
@@ -145,6 +142,6 @@ class BaseView(GenericAPIView):
 
     def handle(self):
         self.serializer = self._create_serializer()
-        self.controller = self._create_controller()
-        data = self.controller.dto(**self.serializer.validated_data)
-        return self._create_response(self.controller.control(data))
+        action = self._create_action()
+        data = action.dto(**self.serializer.validated_data)
+        return self._create_response(action.run(data))

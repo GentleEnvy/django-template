@@ -75,6 +75,7 @@ services:
       context: .
     command: celery -A api worker -c 3 -P gevent -l info
     environment:
+      - DATABASE_URL=psql://user:password@db:5432/db
       - REDIS_URL=redis://redis:6379/0
     env_file:
       - .env

@@ -5,12 +5,17 @@ from rest_framework.mixins import CreateModelMixin
 
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
+from app.users.serializers.register.general import *
+from app.users.actions.register.general import *
 
 ACTIVATE_SUCCESS_URL = settings.VERIFICATION_ACTIVATE_SUCCESS_URL
 ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 
 class UsersRegisterView(CreateModelMixin, BaseView):
+    serializer_map = {'post': POST_UsersRegisterSerializer}
+    action_map = {'get': GET_UsersRegisterAction, 'post': POST_UsersRegisterAction}
+
     @extend_schema(
         responses={
             200: None,
