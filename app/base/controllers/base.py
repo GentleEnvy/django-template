@@ -12,10 +12,10 @@ class BaseController:
                     setattr(self, service_name, service_class())
                 else:
                     setattr(self, service_name, service_class(**service_args))
-    
+
     @property
     def dto(self) -> Callable[[dict], Any]:
         return lambda **data: data
-    
+
     def control(self, data):
         return self.view.serializer.instance

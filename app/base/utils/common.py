@@ -33,5 +33,5 @@ def response_204(f):
     def _f_decorator(*args, **kwargs):
         f(*args, **kwargs)
         return Response(status=204)
-    
+
     return extend_schema(responses={201: None, 204: ''})(_f_decorator)

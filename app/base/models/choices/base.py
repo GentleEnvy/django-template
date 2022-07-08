@@ -4,9 +4,10 @@ from enum import EnumMeta, unique
 from typing import Iterable, Type
 
 from django.db.models import (
-    TextChoices as _TextChoices, IntegerChoices as _IntegerChoices
+    IntegerChoices as _IntegerChoices,
+    TextChoices as _TextChoices,
+    enums,
 )
-from django.db.models import enums
 from django.utils.functional import Promise
 
 ChoicesMeta = getattr(enums, 'ChoicesMeta')
@@ -32,11 +33,11 @@ class _BaseChoicesMeta(ChoicesMeta):
         self.help_text = self.__help_text()
         # noinspection PyTypeChecker
         return unique(self)
-    
+
     @classmethod
     def _parse(cls, index, key, value):
         raise NotImplementedError
-    
+
     def __help_text(self: Iterable) -> str:
         transcripts = []
         for member in self:
@@ -51,10 +52,7 @@ class _TextChoicesMeta(_BaseChoicesMeta):
     @classmethod
     def _parse(cls, index, key, value):
         if isinstance(value, (list, tuple)):
-            if (
-                len(value) > 1 and
-                isinstance(value[-1], (Promise, str))
-            ):
+            if len(value) > 1 and isinstance(value[-1], (Promise, str)):
                 *value, label = value
                 value = tuple(value)
             else:

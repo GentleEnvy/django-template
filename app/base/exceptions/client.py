@@ -1,8 +1,13 @@
 from rest_framework import status as rest_status
 from rest_framework.exceptions import (
-    APIException as RestAPIException, MethodNotAllowed, NotAuthenticated, NotFound,
-    ParseError, PermissionDenied, UnsupportedMediaType,
-    ValidationError as RestValidationError
+    APIException as RestAPIException,
+    MethodNotAllowed,
+    NotAuthenticated,
+    NotFound,
+    ParseError,
+    PermissionDenied,
+    UnsupportedMediaType,
+    ValidationError as RestValidationError,
 )
 
 from app.base.exceptions.base import *

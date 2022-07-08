@@ -8,7 +8,8 @@
 {% endblock text_body %}
 
 {% block html_body %}
-    <p><a href="{{ protocol }}://{{ domain }}{{ path|safe }}?email={{ email }}&code={{ code }}">
+    <p><a href="{{ protocol }}://
+            {{ domain }}{{ path|safe }}?email={{ email }}&code={{ code }}">
         {{ protocol }}://{{ domain }}{{ path|safe }}?email={{ email }}&code={{ code }}
     </a></p>
 {% endblock html_body %}

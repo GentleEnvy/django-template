@@ -17,37 +17,51 @@ from app.users.tests.factories.users import UserFactory
 
 class UsersRegisterTest(BaseViewTest):
     path = '/users/register/'
-    
+
     me_data = None
-    
+
     @parameterized.expand(
         [
             [{'email': fake.email(), 'password': fake.password()}],
-            [{
-                'email': fake.email(), 'password': fake.password(),
-                'first_name': fake.first_name()
-            }],
-            [{
-                'email': fake.email(), 'password': fake.password(),
-                'last_name': fake.last_name()
-            }],
-            [{
-                'email': fake.email(), 'password': fake.password(),
-                'first_name': fake.first_name(), 'last_name': fake.last_name()
-            }]
+            [
+                {
+                    'email': fake.email(),
+                    'password': fake.password(),
+                    'first_name': fake.first_name(),
+                }
+            ],
+            [
+                {
+                    'email': fake.email(),
+                    'password': fake.password(),
+                    'last_name': fake.last_name(),
+                }
+            ],
+            [
+                {
+                    'email': fake.email(),
+                    'password': fake.password(),
+                    'first_name': fake.first_name(),
+                    'last_name': fake.last_name(),
+                }
+            ],
         ]
     )
     def test_post(self, data):
         def check_id(id):
             self.assert_model(
-                User, data | {
+                User,
+                data
+                | {
                     'password': partial(check_password, data['password']),
-                    'is_active': False, 'type': UserType.DEFAULT.value,
+                    'is_active': False,
+                    'type': UserType.DEFAULT.value,
                     'first_name': data.get('first_name'),
-                    'last_name': data.get('last_name')
-                }, id=id
+                    'last_name': data.get('last_name'),
+                },
+                id=id,
             )
-        
+
         email_verification = EmailVerificationService(scope='register')
         code = fake.random_string(email_verification.code_length)
         with mock.patch.object(
@@ -57,14 +71,15 @@ class UsersRegisterTest(BaseViewTest):
         self.assert_equal(len(mail.outbox), 1)
         self.assert_equal(mail.outbox[0].to, [data['email']])
         self.assert_true(email_verification.check(data['email'], code))
-    
+
     def test_post_warn_409(self):
         user = UserFactory()
         self._test(
-            'post', POST_UsersRegisterSerializer.WARNINGS[409],
-            {'email': user.email, 'password': fake.password()}
+            'post',
+            POST_UsersRegisterSerializer.WARNINGS[409],
+            {'email': user.email, 'password': fake.password()},
         )
-    
+
     def test_get(self):
         with mock.patch.object(EmailVerificationService, 'check', return_value=True):
             user = UserFactory(is_active=False)
@@ -75,7 +90,7 @@ class UsersRegisterTest(BaseViewTest):
                 response.url, settings.VERIFICATION_ACTIVATE_SUCCESS_URL % token.key
             )
             self.assert_model(User, {'is_active': True})
-    
+
     def test_get_fail_check_false(self):
         with mock.patch.object(EmailVerificationService, 'check', return_value=False):
             user = UserFactory(is_active=False)
@@ -83,12 +98,12 @@ class UsersRegisterTest(BaseViewTest):
             self.assert_response(response, 302)
             self.assert_equal(response.url, settings.VERIFICATION_ACTIVATE_FAILURE_URL)
             self.assert_model(User, {'is_active': False})
-    
+
     def test_get_fail_no_user(self):
         response = self.get(query={'email': fake.email(), 'code': 'valid_code'})
         self.assert_response(response, 302)
         self.assert_equal(response.url, settings.VERIFICATION_ACTIVATE_FAILURE_URL)
-    
+
     @parameterized.expand([[{'email': fake.email()}], [{'code': 'valid_code'}], [{}]])
     def test_get_fail_query(self, query):
         with mock.patch.object(EmailVerificationService, 'check', return_value=True):

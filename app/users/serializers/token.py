@@ -9,24 +9,25 @@ from app.users.models.choices import UserType
 
 class POST_UsersTokenSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
     token = serializers.CharField(read_only=True)
-    
+
     WARNINGS = {
         401: APIWarning('Неверный пароль', 401, 'invalid_password'),
         404: APIWarning(
             'Пользователя с таким email не существует', 404, 'email_not_found'
         ),
         406: APIWarning('Пользователь не верифицирован', 406, 'not_verified'),
-        410: APIWarning('Пользователь забанен', 410, 'banned')
+        410: APIWarning('Пользователь забанен', 410, 'banned'),
     }
-    
+
     class Meta:
         model = User
         extra_kwargs = {
             'email': {'write_only': True, 'validators': []},
-            'password': {'write_only': True}, 'token': {}
+            'password': {'write_only': True},
+            'token': {},
         }
         fields = list(extra_kwargs.keys())
-    
+
     def validate(self, attrs):
         email = attrs['email']
         password = attrs['password']

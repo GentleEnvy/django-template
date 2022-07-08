@@ -11,12 +11,13 @@ ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 class POST_UsersRegisterResendController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'register'}
-    
+
     def control(self, data):
         self.email_verification.send(
             BaseEmailMessage(
-                request=self.view.request, template_name='users/activation.html',
+                request=self.view.request,
+                template_name='users/activation.html',
                 to=[self.view.serializer.instance.email],
-                context={'path': reverse('register')}
+                context={'path': reverse('register')},
             )
         )

@@ -15,7 +15,7 @@ class BaseTest(APITestCase):
     assert_is_instance = APITestCase.assertIsInstance
     assert_is_none = APITestCase.assertIsNone
     assert_is_not_none = APITestCase.assertIsNotNone
-    
+
     def assert_json(self, json: dict, exp_json: dict):
         def dfs(inner_json, inner_exp_json):
             def visit(exp_key, exp_value):
@@ -30,17 +30,19 @@ class BaseTest(APITestCase):
                         dfs(value, exp_value)
                     else:
                         self.assert_equal(value, exp_value)
-            
+
             [visit(*items) for items in inner_exp_json.items()]
-        
+
         dfs(json, exp_json)
-    
+
     def assert_instance(self, instance: models.Model, instance_data: dict):
         self.assert_json(model_to_dict(instance), instance_data)
-    
+
     def assert_model(
-        self, model: Type[models.Model] | models.Manager | models.QuerySet | models.Model,
-        instance_data: dict, **filters
+        self,
+        model: Type[models.Model] | models.Manager | models.QuerySet | models.Model,
+        instance_data: dict,
+        **filters,
     ):
         match model:
             case type():

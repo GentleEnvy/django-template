@@ -8,5 +8,5 @@ urlpatterns = [
     path('password/', UsersPasswordView.as_view()),
     path('token/', UsersTokenView.as_view()),
     path('me/', UsersMeView.as_view()),
-    path('me/password/', UsersMePasswordView.as_view())
+    path('me/password/', UsersMePasswordView.as_view()),
 ]

@@ -8,24 +8,25 @@ from app.users.models import User
 
 class UsersRegisterTest(BaseViewTest):
     path = '/users/me/'
-    
+
     def test_get(self):
         self._test(
-            'get', dict(
+            'get',
+            dict(
                 filter(
-                    lambda item: item[0] in [
-                        'id', User.USERNAME_FIELD, 'type', 'first_name', 'last_name'
-                    ], model_to_dict(self.me).items()
+                    lambda item: item[0]
+                    in ['id', User.USERNAME_FIELD, 'type', 'first_name', 'last_name'],
+                    model_to_dict(self.me).items(),
                 )
-            )
+            ),
         )
-    
+
     @parameterized.expand(
         [
             [{'first_name': fake.first_name(), 'last_name': fake.last_name()}],
             [{'first_name': fake.first_name()}],
             [{'last_name': fake.last_name()}],
-            [{}]
+            [{}],
         ]
     )
     def test_patch(self, data):

@@ -27,15 +27,15 @@ def _cast_exception(exception: Exception):
 class CriticalError(CastSupportsError):
     TYPE_NAME = 'critical_error'
     LOG_FUNC = critical
-    
+
     EXCEPTION__CAST = {
         RestAPIException: _cast_rest_api_exception,
         DjangoValidationError: _cast_django_validation_error,
-        Exception: _cast_exception
+        Exception: _cast_exception,
     }
-    
+
     def __init__(self, detail=None, status=None):
         super().__init__(
             detail or 'Server error',
-            status or rest_status.HTTP_500_INTERNAL_SERVER_ERROR
+            status or rest_status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

@@ -18,12 +18,12 @@ PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 class GET_UsersPasswordController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'password'}
     password_session: PasswordSessionService
-    
+
     @dataclasses.dataclass
     class _dataclass(BaseEntity):
         email: str
         code: str
-    
+
     def dto(self) -> _dataclass | None:
         query_params = self.view.request.query_params
         try:
@@ -32,7 +32,7 @@ class GET_UsersPasswordController(BaseController):
             )
         except (TypeError, EntityValidationError):
             return None
-    
+
     def control(self, data: _dataclass | None):
         if data is not None and self.email_verification.check(data.email, data.code):
             session_id = self.password_session.create(data.email)
@@ -42,16 +42,17 @@ class GET_UsersPasswordController(BaseController):
 
 class POST_UsersPasswordController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'password'}
-    
+
     @dataclasses.dataclass
     class dto(BaseEntity):
         email: str
-    
+
     def control(self, data: dto):
         self.email_verification.send(
             BaseEmailMessage(
-                request=self.view.request, template_name='users/password.html',
-                to=[data.email]
+                request=self.view.request,
+                template_name='users/password.html',
+                to=[data.email],
             )
         )
 
@@ -59,12 +60,12 @@ class POST_UsersPasswordController(BaseController):
 class PUT_UsersPasswordController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'password'}
     password_session: PasswordSessionService
-    
+
     @dataclasses.dataclass
     class dto(BaseEntity):
         session_id: str
         password: str
-    
+
     def control(self, data: dto):
         if (email := self.password_session.check(data.session_id)) is None:
             raise self.view.serializer.WARNINGS[408]

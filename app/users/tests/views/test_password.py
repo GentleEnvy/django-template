@@ -9,7 +9,7 @@ from app.base.tests.views.base import BaseViewTest
 from app.users.models import User
 from app.users.serializers.password import (
     POST_UsersPasswordSerializer,
-    PUT_UsersPasswordSerializer
+    PUT_UsersPasswordSerializer,
 )
 from app.users.services.email_verification import EmailVerificationService
 from app.users.services.password_session import PasswordSessionService
@@ -19,9 +19,9 @@ from app.users.tests.factories.users import UserFactory
 
 class UsersPasswordTest(BaseViewTest):
     path = '/users/password/'
-    
+
     me_data = None
-    
+
     def test_get(self):
         session_id = fake.random_string()
         with mock.patch.object(
@@ -37,7 +37,7 @@ class UsersPasswordTest(BaseViewTest):
             response.url, settings.VERIFICATION_PASSWORD_SUCCESS_URL % session_id
         )
         self.assert_true(PasswordSessionService().check(session_id))
-    
+
     def test_get_fail_check_false(self):
         session_id = fake.random_string()
         with mock.patch.object(
@@ -51,7 +51,7 @@ class UsersPasswordTest(BaseViewTest):
         self.assert_equal(response.status_code, 302)
         self.assert_equal(response.url, settings.VERIFICATION_PASSWORD_FAILURE_URL)
         self.assert_false(PasswordSessionService().check(session_id))
-    
+
     @parameterized.expand(
         [[{'code': fake.random_string()}], [{'email': fake.email()}], [{}]]
     )
@@ -66,7 +66,7 @@ class UsersPasswordTest(BaseViewTest):
         self.assert_equal(response.status_code, 302)
         self.assert_equal(response.url, settings.VERIFICATION_PASSWORD_FAILURE_URL)
         self.assert_false(PasswordSessionService().check(session_id))
-    
+
     def test_post(self):
         email = UserFactory().email
         code = fake.random_string()
@@ -77,7 +77,7 @@ class UsersPasswordTest(BaseViewTest):
         self.assert_equal(len(mail.outbox), 1)
         self.assert_equal(mail.outbox[0].to, [email])
         self.assert_true(EmailVerificationService(scope='password').check(email, code))
-    
+
     def test_post_warn_404(self):
         email = fake.email()
         code = fake.random_string()
@@ -89,7 +89,7 @@ class UsersPasswordTest(BaseViewTest):
             )
         self.assert_equal(len(mail.outbox), 0)
         self.assert_false(EmailVerificationService(scope='password').check(email, code))
-    
+
     def test_put(self):
         token = TokenFactory()
         new_password = fake.password()
@@ -97,14 +97,16 @@ class UsersPasswordTest(BaseViewTest):
             PasswordSessionService, 'check', return_value=token.user.email
         ):
             self._test(
-                'put', {'token': token.key},
-                {'session_id': fake.random_string(), 'new_password': new_password}
+                'put',
+                {'token': token.key},
+                {'session_id': fake.random_string(), 'new_password': new_password},
             )
         self.assert_true(User.objects.get().check_password(new_password))
-    
+
     def test_put_warn_408(self):
         with mock.patch.object(PasswordSessionService, 'check', return_value=None):
             self._test(
-                'put', PUT_UsersPasswordSerializer.WARNINGS[408],
-                {'session_id': fake.random_string(), 'new_password': fake.password()}
+                'put',
+                PUT_UsersPasswordSerializer.WARNINGS[408],
+                {'session_id': fake.random_string(), 'new_password': fake.password()},
             )

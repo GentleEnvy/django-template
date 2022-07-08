@@ -5,7 +5,9 @@ from app.users.services.auth import AuthService
 class POST_UsersTokenController(BaseController):
     def control(self, data):
         return {
-            'token': AuthService(self.view.request, self.view.serializer.instance).login()
+            'token': AuthService(
+                self.view.request, self.view.serializer.instance
+            ).login()
         }
 
 

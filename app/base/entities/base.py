@@ -14,7 +14,7 @@ class BaseEntity(ValidatedDC):
         self._run_validation()
         if errors := self.get_errors():
             raise EntityValidationError(errors)
-    
+
     @classmethod
     def from_model(cls, instance: AbstractModel, **fields_map: str) -> BaseEntity:
         data = {}
@@ -24,6 +24,6 @@ class BaseEntity(ValidatedDC):
             data[field_name] = getattr(instance, field_name)
         # noinspection PyArgumentList
         return cls(**data)
-    
+
     def __iter__(self):
         return iter(asdict(self).items())

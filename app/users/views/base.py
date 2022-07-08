@@ -8,7 +8,7 @@ __all__ = ['BaseAuthView']
 
 class BaseAuthView(BaseView):
     permission_classes = [IsAuthenticatedPermission]
-    
+
     @classmethod
     def _to_auth_schema(cls) -> None:
         auth_schema = TokenAuthentication.WARNING_401.to_schema()
@@ -17,8 +17,10 @@ class BaseAuthView(BaseView):
                 method = getattr(cls, method_name)
             except AttributeError:
                 continue
-            setattr(cls, method_name, extend_schema(responses={401: auth_schema})(method))
-    
+            setattr(
+                cls, method_name, extend_schema(responses={401: auth_schema})(method)
+            )
+
     @classmethod
     def _to_schema(cls) -> None:
         cls._to_auth_schema()

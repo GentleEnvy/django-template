@@ -8,5 +8,5 @@ from app.users.tests.factories.users import UserFactory
 class TokenFactory(BaseFactory):
     class Meta:
         model = Token
-    
+
     user = factory.SubFactory(UserFactory)

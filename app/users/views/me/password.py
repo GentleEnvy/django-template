@@ -11,6 +11,6 @@ class UsersMePasswordView(UpdateModelMixin, BaseAuthView):
         if settings.SESSION_ON_LOGIN:
             login(request, request.user)
         return result
-    
+
     def get_object(self):
         return self.request.user

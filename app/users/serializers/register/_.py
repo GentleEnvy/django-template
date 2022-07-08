@@ -18,20 +18,25 @@ class _EmailUniqueValidator(UniqueValidator):
 
 class POST_UsersRegisterSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
     WARNINGS = {
-        409: APIWarning('User с таким email уже существует', 409, 'register_email_unique')
+        409: APIWarning(
+            'User с таким email уже существует', 409, 'register_email_unique'
+        )
     }
-    
+
     class Meta:
         model = User
         extra_kwargs = {
             'email': {
                 'validators': [_EmailUniqueValidator(queryset=User.objects.all())],
-                'write_only': True
-            }, 'password': {'write_only': True}, 'first_name': {'write_only': True},
-            'last_name': {'write_only': True}, 'id': {}
+                'write_only': True,
+            },
+            'password': {'write_only': True},
+            'first_name': {'write_only': True},
+            'last_name': {'write_only': True},
+            'id': {},
         }
         fields = list(extra_kwargs.keys())
-    
+
     def validate(self, attrs):
         validate_password(attrs['password'], User(**attrs))
         return attrs

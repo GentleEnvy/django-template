@@ -11,7 +11,7 @@ class SubFaker(_Faker):
     password: Callable[..., str]
     email: Callable[..., str]
     future_date: Callable[..., datetime.date]
-    
+
     def random_string(self, length: int = 10):
         letters_count = self.random_int(max=length)
         letters = self.random_letters(letters_count)

@@ -15,12 +15,12 @@ ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
 
 class GET_UsersRegisterController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'register'}
-    
+
     @dataclasses.dataclass
     class _dataclass:
         email: str
         code: str
-    
+
     def dto(self):
         try:
             return self._dataclass(
@@ -28,7 +28,7 @@ class GET_UsersRegisterController(BaseController):
             )
         except TypeError:
             return None
-    
+
     def control(self, data: _dataclass):
         if data is None:
             return ACTIVATE_FAILURE_URL
@@ -46,21 +46,22 @@ class GET_UsersRegisterController(BaseController):
 
 class POST_UsersRegisterController(BaseController):
     email_verification: EmailVerificationService = {'scope': 'register'}
-    
+
     @dataclasses.dataclass
     class dto:
         email: str
         password: str
         first_name: str | None = dataclasses.field(default=None)
         last_name: str | None = dataclasses.field(default=None)
-    
+
     def control(self, data: dto):
         data.password = make_password(data.password)
         user = self.view.serializer.create(data.__dict__ | {'is_active': False})
         self.email_verification.send(
             BaseEmailMessage(
-                request=self.view.request, template_name='users/activation.html',
-                to=[user.email]
+                request=self.view.request,
+                template_name='users/activation.html',
+                to=[user.email],
             )
         )
         return user
