@@ -10,6 +10,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 
+# noinspection PyPackageRequirements
+from silk.profiling.profiler import silk_profile
+
 from app.base.actions.base import BaseAction
 from app.base.exceptions import *
 from app.base.permissions.base import BasePermission
@@ -114,7 +117,7 @@ class BaseView(GenericAPIView):
     @classmethod
     def as_view(cls, **init_kwargs):
         cls._to_schema()
-        return csrf_exempt(super().as_view(**init_kwargs))
+        return silk_profile(name='view')(csrf_exempt(super().as_view(**init_kwargs)))
 
     def handle_exception(self, exception):
         return _exception_handler(exception)
@@ -124,6 +127,10 @@ class BaseView(GenericAPIView):
             getattr(request, 'on_auth_fail', lambda: None)()
             raise exceptions.NotAuthenticated()
         raise exceptions.PermissionDenied(detail=message, code=code)
+
+    def perform_authentication(self, request):
+        """Lazy authentication"""
+        pass
 
     def _create_serializer(self):
         serializer = self.get_serializer(data=self.request.data)

@@ -25,6 +25,7 @@ services:
     build:
       context: .
     command: bash -c "
+        python manage.py migrate &&
         python manage.py collectstatic --noinput &&
         gunicorn api.wsgi -c gunicorn_conf.py
       "
@@ -34,7 +35,8 @@ services:
     env_file:
       - .env
     volumes:
-      - /tmp/static:/api/staticfiles
+      - static_volume:/api/static
+      - profile_volume:/api/profile
     ports:
       - 8000:8000
     depends_on:
@@ -58,12 +60,14 @@ services:
     env_file:
       - .env
     environment:
-      NGINX_ENVSUBST_TEMPLATE_SUFFIX: .conf
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.conf
+      - API_DOMAIN=api.local.dev
+      - WEB_DOMAIN=local.dev
     ports:
       - 80:80
       - 443:443
     volumes:
-      - /tmp/static:/staticfiles
+      - static_volume:/static
       - web_volume:/html
       - ./nginx.conf.conf:/etc/nginx/templates/nginx.conf.conf
       - ./certs:/certs
@@ -104,6 +108,8 @@ services:
 volumes:
   db_volume:
   web_volume:
+  static_volume:
+  profile_volume:
 
 networks:
   db_network:

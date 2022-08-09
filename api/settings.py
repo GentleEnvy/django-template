@@ -3,11 +3,14 @@
 import base64
 import importlib
 from functools import partial
+import os
 from pathlib import Path
+import warnings
+
+from pybase64 import b64decode, b64encode
 
 # noinspection PyPackageRequirements
 import environ
-from pybase64 import b64decode, b64encode
 
 from app.base.logs.configs import LogConfig
 
@@ -19,7 +22,6 @@ base64.b64decode = b64decode
 _env_value = {'value': lambda s: s.split(',')}
 
 env = environ.Env(
-    SITE_NAME=(str, 'dev'),
     WEB_DOMAIN=(str, 'local.dev'),
     API_DOMAIN=(str, 'api.local.dev'),
     SECRET_KEY=(str, 'secret'),
@@ -60,18 +62,16 @@ env = environ.Env(
 
 # root
 
-SETTINGS_PATH = environ.Path(__file__)
-BASE_DIR = SETTINGS_PATH - 2
+BASE_DIR = environ.Path(__file__) - 2
 
-WSGI_APPLICATION = (SETTINGS_PATH - 1)().split('\\')[-1].split('/')[-1] + (
-    '.wsgi.application'
-)
-ROOT_URLCONF = (SETTINGS_PATH - 1)().split('\\')[-1].split('/')[-1] + '.urls'
+WSGI_APPLICATION = 'api.wsgi.application'
+ASGI_APPLICATION = 'api.asgi.application'
+ROOT_URLCONF = 'api.urls'
 
 # site
 
+SITE_NAME = 'Dev'
 SITE_ROOT = BASE_DIR
-SITE_NAME = env('SITE_NAME')
 WEB_DOMAIN = env('WEB_DOMAIN')
 API_DOMAIN = env('API_DOMAIN')
 DOMAIN = WEB_DOMAIN
@@ -92,19 +92,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     # third-party apps
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
     'django_filters',
     'django_cleanup',
     'django_pickling',
+    'cacheops',
+    'silk',
+    'drf_spectacular',
     'django_celery_beat',
     'djcelery_email',
-    'cacheops',
-    'cloudinary',
-    'cloudinary_storage',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'drf_spectacular',
-    'corsheaders',
-    *(['debug_toolbar'] if DEBUG else []),
     # own apps
     'app.base',
     'app.users',
@@ -115,7 +113,11 @@ REST_FRAMEWORK = {
         'drf_orjson_renderer.renderers.ORJSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
-    'DEFAULT_PARSER_CLASSES': ['drf_orjson_renderer.parsers.ORJSONParser'],
+    'DEFAULT_PARSER_CLASSES': [
+        'drf_orjson_renderer.parsers.ORJSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'app.users.authentications.token.TokenAuthentication',
         'app.users.authentications.session.SessionAuthentication',
@@ -135,20 +137,17 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # should be as high as possible
     # django middlewares
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # third-party middlewares
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    *(['debug_toolbar.middleware.DebugToolbarMiddleware'] if DEBUG else []),
     # own middlewares
-    'app.base.middlewares.RequestLogMiddleware',
+    'silk.middleware.SilkyMiddleware',
 ]
 
 TEMPLATES = [
@@ -189,9 +188,9 @@ REDIS_URL = _default_cache['LOCATION']
 CACHEOPS_REDIS = REDIS_URL
 
 CACHEOPS_DEFAULTS = {
-    'timeout': 60 * 5,
+    'timeout': 60 * 60,
     'cache_on_save': True,
-    'ops': ['get', 'fetch', 'exists'],
+    'ops': ['get', 'fetch', 'exists', 'count'],
 }
 CACHEOPS = {'authtoken.*': {}, 'users.*': {}}
 
@@ -199,24 +198,23 @@ CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # email
 
-EMAIL_HOST: str
-EMAIL_PORT: int
-EMAIL_USE_SSL: bool
-EMAIL_HOST_USER: str
-EMAIL_HOST_PASSWORD: str
-EMAIL_BACKEND: str
+EMAIL_HOST: str | None = None
+EMAIL_PORT: int | None = None
+EMAIL_USE_SSL: bool | None = None
+EMAIL_HOST_USER: str | None = None
+EMAIL_HOST_PASSWORD: str | None = None
+EMAIL_BACKEND: str | None = None
+
+try:
+    vars().update(
+        env.email('EMAIL_URL', backend='djcelery_email.backends.CeleryEmailBackend')
+    )
+except environ.ImproperlyConfigured:
+    warnings.warn("EMAIL_URL isn't set")
 
 vars().update(
     env.email('EMAIL_URL', backend='djcelery_email.backends.CeleryEmailBackend')
 )
-
-# verification
-
-VERIFICATION_CODE_TIMEOUT = env('VERIFICATION_CODE_TIMEOUT')
-VERIFICATION_ACTIVATE_SUCCESS_URL = env('VERIFICATION_ACTIVATE_SUCCESS_URL')
-VERIFICATION_ACTIVATE_FAILURE_URL = env('VERIFICATION_ACTIVATE_FAILURE_URL')
-VERIFICATION_PASSWORD_SUCCESS_URL = env('VERIFICATION_PASSWORD_SUCCESS_URL')
-VERIFICATION_PASSWORD_FAILURE_URL = env('VERIFICATION_PASSWORD_FAILURE_URL')
 
 # celery_email
 
@@ -226,6 +224,14 @@ CELERY_EMAIL_BACKEND = (
 )
 CELERY_EMAIL_TASK_CONFIG = {'name': None, 'ignore_result': False}
 CELERY_EMAIL_CHUNK_SIZE = 1
+
+# verification
+
+VERIFICATION_CODE_TIMEOUT = env('VERIFICATION_CODE_TIMEOUT')
+VERIFICATION_ACTIVATE_SUCCESS_URL = env('VERIFICATION_ACTIVATE_SUCCESS_URL')
+VERIFICATION_ACTIVATE_FAILURE_URL = env('VERIFICATION_ACTIVATE_FAILURE_URL')
+VERIFICATION_PASSWORD_SUCCESS_URL = env('VERIFICATION_PASSWORD_SUCCESS_URL')
+VERIFICATION_PASSWORD_FAILURE_URL = env('VERIFICATION_PASSWORD_FAILURE_URL')
 
 # celery
 
@@ -256,22 +262,33 @@ CELERY_BEAT_SCHEDULE = {}
 MEDIA_URL = '/media/'
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
-CLOUDINARY_URL = env('CLOUDINARY_URL')
-if CLOUDINARY_URL:
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
 # static
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR + 'staticfiles'
+STATIC_ROOT = BASE_DIR + 'static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# silk
+
+SILKY_INTERCEPT_FUNC = lambda r: DEBUG
+
+SILKY_META = True
+SILKY_ANALYZE_QUERIES = True
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
+SILKY_PYTHON_PROFILER_RESULT_PATH = BASE_DIR + 'profiles/'
+if not os.path.exists(SILKY_PYTHON_PROFILER_RESULT_PATH):
+    os.makedirs(SILKY_PYTHON_PROFILER_RESULT_PATH)
+
+SILKY_MAX_RECORDED_REQUESTS = 1_000
+SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 50
 
 # swagger
 
 SPECTACULAR_SETTINGS = {
     'TITLE': f'{SITE_NAME} API',
     'VERSION': '1.0',
-    'DISABLE_ERRORS_AND_WARNINGS': DEBUG,
+    'DISABLE_ERRORS_AND_WARNINGS': not DEBUG,
 }
 
 # db
@@ -282,6 +299,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # auth
 
+AUTH_USER_MODEL = 'users.User'
+SESSION_ON_LOGIN = env('SESSION_ON_LOGIN', bool, DEBUG)
+
+# password
+
+PASSWORD_HASHERS = ['app.base.hashers.argon2.Argon2PasswordHasher']
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
@@ -291,16 +315,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-AUTH_USER_MODEL = 'users.User'
-SESSION_ON_LOGIN = env('SESSION_ON_LOGIN', bool, DEBUG)
-
 # logs
-
-LOG_ADMINS = {
-    v[0]: list(map(lambda s: s.lower(), v[1:])) for v in env('ADMINS').values()
-}
-ADMINS = [(name, email__levels[0]) for name, email__levels in env('ADMINS').items()]
-EMAIL_SUBJECT_PREFIX = f'{SITE_NAME} logger > '
 
 LOG_FORMATTERS = env('LOG_FORMATTERS')
 LOG_PRETTY = env('LOG_PRETTY')
