@@ -1,21 +1,15 @@
 # imports
 
-import base64
 import importlib
 from functools import partial
 import os
 from pathlib import Path
 import warnings
 
-from pybase64 import b64decode, b64encode
-
 # noinspection PyPackageRequirements
 import environ
 
 from app.base.logs.configs import LogConfig
-
-base64.b64encode = b64encode
-base64.b64decode = b64decode
 
 # env
 
@@ -55,7 +49,9 @@ env = environ.Env(
         },
     ),
     LOG_LEVEL=(dict, {}),
-    CELERY_REDIS_MAX_CONNECTIONS=(int, 10),
+    CELERY_REDIS_MAX_CONNECTIONS=(int, 2),
+    CELERY_BROKER_POOL_LIMIT=int,  # default: CELERY_REDIS_MAX_CONNECTIONS
+    CELERY_TASK_EAGER=(bool, False),
     ADMINS=(_env_value, {}),
     CLOUDINARY_URL=(str, None),
 )
@@ -233,27 +229,33 @@ VERIFICATION_ACTIVATE_FAILURE_URL = env('VERIFICATION_ACTIVATE_FAILURE_URL')
 VERIFICATION_PASSWORD_SUCCESS_URL = env('VERIFICATION_PASSWORD_SUCCESS_URL')
 VERIFICATION_PASSWORD_FAILURE_URL = env('VERIFICATION_PASSWORD_FAILURE_URL')
 
-# celery
+# celery[broker]
 
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=REDIS_URL)
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=REDIS_URL)
 
-CELERY_REDIS_MAX_CONNECTIONS = env('CELERY_REDIS_MAX_CONNECTIONS')
-CELERY_REDIS_SOCKET_KEEPALIVE = True
-
+CELERY_TASK_ALWAYS_EAGER = env('CELERY_TASK_EAGER')
+CELERY_TASK_ANNOTATIONS = {'*': {'rate_limit': '10/s'}}
+CELERY_TASK_COMPRESSION = 'gzip'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    'visibility_timeout': 20,
-    'max_connections': CELERY_REDIS_MAX_CONNECTIONS,
+    'visibility_timeout': 12 * 60 * 60,
+    'max_connections': env('CELERY_REDIS_MAX_CONNECTIONS'),
     'socket_keepalive': True,
 }
-CELERY_BROKER_POOL_LIMIT = 0
-
-CELERY_RESULT_SERIALIZER = 'json'
-
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_IGNORE_RESULT = False
+CELERY_BROKER_POOL_LIMIT = env(
+    'CELERY_BROKER_POOL_LIMIT', default=env('CELERY_REDIS_MAX_CONNECTIONS')
+)
 CELERY_TRACK_STARTED = True
+CELERY_TASK_SERIALIZER = 'json'
+
+# celery[result]
+
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=REDIS_URL)
+
+CELERY_RESULT_COMPRESSION = CELERY_TASK_COMPRESSION
+CELERY_RESULT_ACCEPT_CONTENT = ['json']
+CELERY_IGNORE_RESULT = False
+
+# celery beat
 
 CELERY_BEAT_SCHEDULE = {}
 
@@ -268,9 +270,13 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR + 'static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+
 # silk
 
-SILKY_INTERCEPT_FUNC = lambda r: DEBUG
+
+def SILKY_INTERCEPT_FUNC(_):
+    return DEBUG
+
 
 SILKY_META = True
 SILKY_ANALYZE_QUERIES = True

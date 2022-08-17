@@ -1,32 +1,27 @@
-Django==3.2.2
-django-cors-headers==3.11.0
-django-environ==0.8.1
-django-filter==21.1
+Django==4.0  # django-celery-beat: Django <= 4.0
+django-cors-headers==3.13.0
+django-environ==0.9.0
+django-filter==22.1
 django-cleanup==6.0.0
 django-templated-mail==1.1.1
 django-cloudinary-storage==0.3.0
 django-celery-email==3.0.0
-django-celery-beat==2.2.1
+django-celery-beat==2.3.0
 django-pickling==1.0
 django-redis==5.2.0
-git+https://github.com/GentleEnvy/django-cacheops  # ==6.0. https://github.com/Suor/django-cacheops/issues/31
+django-cacheops==6.1
 
 djangorestframework==3.13.1
-djangorestframework-simplejwt==5.1.0
-drf-base64==2.0
 drf_orjson_renderer==1.6.0
-drf-spectacular==0.20.2
+drf-spectacular==0.23.1
 
 psycopg2-binary==2.9.3
-pybase64==1.2.1
-python-dateutil==2.8.2
-redis==4.2.2
-Pillow==9.1.0
+redis==4.3.4
+Pillow==9.2.0
 gunicorn==20.1.0
-whitenoise==6.0.0
-celery==5.0.2  # https://github.com/celery/celery/issues/6819
+whitenoise==6.2.0
+celery==5.2.7
 gevent==21.12.0
-tzdata==2022.1
 argon2-cffi==21.3.0
 validated-dc==1.3.3
 
@@ -35,6 +30,5 @@ django-silk==5.0.1
 
 # test
 parameterized==0.8.1
-freezegun==1.2.1
 factory_boy==3.2.1
-Faker==13.6.0
+Faker==14.1

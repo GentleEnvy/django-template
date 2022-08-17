@@ -6,7 +6,7 @@ services:
     volumes:
       - db_volume:/var/lib/postgresql/data
     ports:
-      - ${DB_PORT}:5432
+      - 5432:5432
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
@@ -48,10 +48,9 @@ services:
       - nginx_network
     restart: unless-stopped
   web:
-    build:
-      context: web
+    image: node:14.0.0
     volumes:
-      - web_volume:/frontend/build
+      - web_volume:/build
   nginx:
     image: nginx:1.21.6
     depends_on:
@@ -77,7 +76,7 @@ services:
   celery:
     build:
       context: .
-    command: celery -A api worker -c 3 -P gevent -l info
+    command: celery -A api worker -c 1 -P gevent -l info
     environment:
       - DATABASE_URL=psql://user:password@db:5432/db
       - REDIS_URL=redis://redis:6379/0
