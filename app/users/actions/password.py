@@ -1,5 +1,3 @@
-import dataclasses
-
 from django.conf import settings
 from pydantic import EmailStr, HttpUrl
 from rest_framework.request import Request
@@ -10,9 +8,6 @@ from app.users.models import User
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
 from app.users.services.password_session import PasswordSessionService
-
-PASSWORD_SUCCESS_URL = settings.VERIFICATION_PASSWORD_SUCCESS_URL
-PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
 class GET_UsersPasswordAction:
