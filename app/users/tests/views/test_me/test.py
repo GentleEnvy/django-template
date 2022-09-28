@@ -6,7 +6,7 @@ from app.base.tests.views.base import BaseViewTest
 from app.users.models import User
 
 
-class UsersRegisterTest(BaseViewTest):
+class UsersMeTest(BaseViewTest):
     path = '/users/me/'
 
     def test_get(self):
@@ -30,5 +30,5 @@ class UsersRegisterTest(BaseViewTest):
         ]
     )
     def test_patch(self, data):
-        self._test('patch', {'id': self.me.id}, data)
+        self._test('patch', {}, data)
         self.assert_model(User, data)

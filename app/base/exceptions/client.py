@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework import status as rest_status
 from rest_framework.exceptions import (
     APIException as RestAPIException,
@@ -24,6 +25,10 @@ def _cast_rest_validation_error(exception: RestValidationError):
     return ClientError(extract_detail(exception), getattr(exception, 'status_code'))
 
 
+def _cast_http_404(exception: Http404):
+    return ClientError(str(exception), rest_status.HTTP_404_NOT_FOUND)
+
+
 class ClientError(CastSupportsError):
     TYPE_NAME = 'client_error'
     
@@ -32,6 +37,7 @@ class ClientError(CastSupportsError):
         ParseError: _cast_rest_api_exception,
         NotAuthenticated: _cast_rest_api_exception,
         PermissionDenied: _cast_rest_api_exception,
+        Http404: _cast_http_404,
         NotFound: _cast_rest_api_exception,
         MethodNotAllowed: _cast_rest_api_exception,
         UnsupportedMediaType: _cast_rest_api_exception,

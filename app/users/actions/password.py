@@ -1,11 +1,11 @@
 import dataclasses
 
 from django.conf import settings
+from pydantic import EmailStr, HttpUrl
+from rest_framework.request import Request
 from templated_mail.mail import BaseEmailMessage
 
-from app.base.actions.base import BaseAction
-from app.base.dtos.base import BaseDTO
-from app.base.exceptions import DTOValidationError
+from app.base.entities.base import BaseEntity
 from app.users.models import User
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
@@ -15,68 +15,63 @@ PASSWORD_SUCCESS_URL = settings.VERIFICATION_PASSWORD_SUCCESS_URL
 PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
 
 
-class GET_UsersPasswordAction(BaseAction):
-    def __init__(self, view):
-        super().__init__(view)
+class GET_UsersPasswordAction:
+    class InEntity(BaseEntity):
+        email: EmailStr
+        code: str
+
+    class OutEntity(BaseEntity):
+        url: HttpUrl
+
+    def __init__(self):
         self.email_verification = EmailVerificationService(scope='password')
         self.password_session = PasswordSessionService()
 
-    @dataclasses.dataclass
-    class DTO(BaseDTO):
-        email: str
-        code: str
-
-    def dto(self) -> DTO | None:
-        query_params = self.view.request.query_params
-        try:
-            return self.DTO(
-                email=query_params.get('email'), code=query_params.get('code')
-            )
-        except (TypeError, DTOValidationError):
-            return None
-
-    def run(self, data: DTO | None):
+    def run(self, data: InEntity) -> OutEntity:
         if data is not None and self.email_verification.check(data.email, data.code):
             session_id = self.password_session.create(data.email)
-            return PASSWORD_SUCCESS_URL % session_id
-        return PASSWORD_FAILURE_URL
+            return self.OutEntity(
+                url=settings.VERIFICATION_PASSWORD_SUCCESS_URL % session_id
+            )
+        return self.OutEntity(url=settings.VERIFICATION_PASSWORD_FAILURE_URL)
 
 
-class POST_UsersPasswordAction(BaseAction):
-    def __init__(self, view):
-        super().__init__(view)
+class POST_UsersPasswordAction:
+    class InEntity(BaseEntity):
+        email: str
+    
+    def __init__(self):
         self.email_verification = EmailVerificationService(scope='password')
 
-    @dataclasses.dataclass
-    class dto(BaseDTO):
-        email: str
-
-    def run(self, data: dto):
+    def run(self, data: InEntity) -> None:
         self.email_verification.send(
             BaseEmailMessage(
-                request=self.view.request,
                 template_name='users/password.html',
                 to=[data.email],
             )
         )
 
 
-class PUT_UsersPasswordAction(BaseAction):
-    def __init__(self, view):
-        super().__init__(view)
-        self.email_verification = EmailVerificationService(scope='password')
-        self.password_session = PasswordSessionService()
-
-    @dataclasses.dataclass
-    class dto(BaseDTO):
+class PUT_UsersPasswordAction:
+    class InEntity(BaseEntity):
+        request: Request
         session_id: str
         password: str
 
-    def run(self, data: dto):
+    class OutEntity(BaseEntity):
+        token: str
+
+    def __init__(self):
+        self.email_verification = EmailVerificationService(scope='password')
+        self.password_session = PasswordSessionService()
+        self.auth_service = AuthService()
+        self.user_manager = User.objects
+
+    def run(self, data: InEntity) -> OutEntity:
         if (email := self.password_session.check(data.session_id)) is None:
-            raise self.view.serializer.WARNINGS[408]
-        user = User.objects.get(email=email)
+            raise TimeoutError
+        user = self.user_manager.get(email=email)
         user.set_password(data.password)
         user.save()
-        token = AuthService(self.view.request, user).login()
-        return {'token': token}
+        token = self.auth_service.login(user, data.request).key
+        return self.OutEntity(token=token)

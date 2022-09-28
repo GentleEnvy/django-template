@@ -1,26 +1,25 @@
-from django.core.cache import cache
 from django.utils.crypto import get_random_string
+
+from app.base.services.cache import Cache
 
 
 class PasswordSessionService:
-    SESSION_LENGTH: int = 10
-    SESSION_EXPIRE: int = 3600
-    SESSION_PREFIX: str = 'password_session'
+    def __init__(self):
+        self.session_length: int = 10
+        self.cache = Cache('password_session', 3600)
 
     def _generate_session_id(self) -> str:
-        return get_random_string(self.SESSION_LENGTH)
+        return get_random_string(self.session_length)
 
     def create(self, email: str) -> str:
         """:return: session_id"""
         session_id = self._generate_session_id()
-        key = f'{self.SESSION_PREFIX}:{session_id}'
-        cache.set(key, email, self.SESSION_EXPIRE)
+        self.cache.set(email, session_id)
         return session_id
 
     def check(self, session_id: str) -> str | None:
-        key = f'{self.SESSION_PREFIX}:{session_id}'
-        email = cache.get(key)
+        email = self.cache.get(session_id)
         if email is None:
             return None
-        cache.delete(key)
+        self.cache.delete(session_id)
         return email

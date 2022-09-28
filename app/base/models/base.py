@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class AbstractModel(models.Model):
+class BaseModel(models.Model):
     class Meta:
         abstract = True
         ordering = ['id']

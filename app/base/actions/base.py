@@ -1,15 +1,16 @@
-from typing import Any, Callable, Final
+from abc import ABC, abstractmethod
+from typing import Type, TypeAlias
 
-from app.base.views import base
+from app.base.entities.base import BaseEntity
+from app.base.models.base import BaseModel
+
+_EntityType: TypeAlias = Type[BaseEntity] | Type[BaseModel]
 
 
-class BaseAction:
-    def __init__(self, view: 'base.BaseView'):
-        self.view: Final[base.BaseView] = view
+class BaseAction(ABC):
+    InEntity: Type[_EntityType] = None
+    OutEntity: Type[_EntityType] = None
 
-    @property
-    def dto(self) -> Callable[[dict], Any]:
-        return lambda **data: data
-
-    def run(self, data):
-        return self.view.serializer.instance
+    @abstractmethod
+    def run(self, data: 'InEntity') -> 'OutEntity':
+        raise NotImplementedError

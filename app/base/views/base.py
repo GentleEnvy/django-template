@@ -4,7 +4,7 @@ from typing import Type
 
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import exceptions, serializers
+from rest_framework import exceptions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
@@ -13,19 +13,16 @@ from rest_framework.views import set_rollback
 # noinspection PyPackageRequirements
 from silk.profiling.profiler import silk_profile
 
-from app.base.actions.base import BaseAction
+from app.base.authentications.token import TokenAuthentication
 from app.base.exceptions import *
+from app.base.models.base import BaseModel
 from app.base.permissions.base import BasePermission
-from app.base.schemas.mixins import SerializerSchemaMixin, ViewSchemaMixin
-from app.base.serializers.base import EmptySerializer
+from app.base.serializers.base import BaseSerializer
 from app.base.utils.common import status_by_method
 from app.base.utils.schema import extend_schema
+from app.users.permissions import IsAuthenticatedPermission
 
 __all__ = ['BaseView']
-
-_SerializerType = serializers.Serializer | SerializerSchemaMixin
-_TypeSerializer = Type[_SerializerType]
-_TypePermission = Type[BasePermission]
 
 
 def _exception_handler(exception):
@@ -60,42 +57,65 @@ def _exception_handler(exception):
 class BaseView(GenericAPIView):
     lookup_field = 'id'
     ordering = 'id'
-    serializer_class = EmptySerializer
-    serializer_map: dict[str, tuple[int, _TypeSerializer] | _TypeSerializer] = {}
-    permissions_map: dict[str, list[_TypePermission] | tuple[_TypePermission]] = {}
-    action_map: dict[str, Type[BaseAction]] = {}
-    serializer: _SerializerType = None
+    serializer_class = BaseSerializer
+    permission_classes = []
+    serializer_map: dict[
+        str, tuple[int, Type[BaseSerializer]] | Type[BaseSerializer]
+    ] = {}
+    permissions_map: dict[str, list[Type[BasePermission]]] = {}
 
     @property
     def method(self) -> str:
-        return self.request.method.lower()
+        return self.request.method.lower() if hasattr(self, 'request') else ''
 
     @classmethod
     def _extract_serializer_class_with_status(
         cls, method_name: str
-    ) -> tuple[int, _TypeSerializer] | None:
+    ) -> tuple[int, Type[BaseSerializer]] | None:
         serializer_class = cls.serializer_map.get(method_name)
-        if serializer_class and issubclass(serializer_class, serializers.Serializer):
-            status = status_by_method(method_name)
-            return status, serializer_class
+        if serializer_class and issubclass(serializer_class, BaseSerializer):
+            http_status = status_by_method(method_name)
+            return http_status, serializer_class
         return serializer_class
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[BaseSerializer]:
         serializer_class = self._extract_serializer_class_with_status(self.method)
         if serializer_class is None:
             return self.serializer_class
         return serializer_class[1]
 
-    def get_permissions(self):
-        permission_classes = self.permissions_map.get(self.method)
-        if permission_classes is None:
-            return super().get_permissions()
-        if isinstance(permission_classes, list):
-            permission_classes = self.permission_classes + permission_classes
-        return [p() for p in permission_classes]
+    def get_serializer(self, *args, **kwargs) -> BaseSerializer:
+        return super().get_serializer(*args, **kwargs)
+
+    def get_valid_serializer(self, *args, **kwargs) -> BaseSerializer:
+        kwargs['data'] = self.request.data
+        serializer = self.get_serializer(*args, **kwargs)
+        serializer.is_valid()
+        return serializer
+
+    def get_object(self) -> BaseModel:
+        return super().get_object()
+
+    def get_permission_classes(self) -> list[Type[BasePermission]]:
+        return self.permission_classes + self.permissions_map.get(self.method, [])
+
+    def get_permissions(self) -> list[BasePermission]:
+        return [p() for p in self.get_permission_classes()]
 
     @classmethod
-    def _to_schema(cls) -> None:
+    def _decorate_methods(cls) -> None:
+        def _force_args(f):
+            def wrapped_f(*args, **kwargs):
+                match f.__code__.co_argcount:
+                    case 0:
+                        return f()
+                    case 1:
+                        return f(args[0])
+                return f(*args, **kwargs)
+
+            return wrapped_f
+
+        auth_schema = TokenAuthentication.WARNING_401.get_schema()
         for method_name in cls.http_method_names:
             try:
                 method = getattr(cls, method_name)
@@ -106,17 +126,19 @@ class BaseView(GenericAPIView):
             extracted = cls._extract_serializer_class_with_status(method_name)
             if extracted:
                 serializer_class = extracted[1]
-                if issubclass(serializer_class, SerializerSchemaMixin):
-                    responses |= serializer_class.to_schema(extracted[0])
+                if get_schema := getattr(serializer_class, 'get_schema'):
+                    responses |= get_schema(extracted[0])
 
-            if issubclass(cls, ViewSchemaMixin):
-                responses |= cls.to_schema()
+            if IsAuthenticatedPermission in cls.get_permission_classes(cls()):
+                responses |= {401: auth_schema}
 
-            setattr(cls, method_name, extend_schema(responses=responses)(method))
+            method = extend_schema(responses=responses)(method)
+            method = _force_args(method)
+            setattr(cls, method_name, method)
 
     @classmethod
     def as_view(cls, **init_kwargs):
-        cls._to_schema()
+        cls._decorate_methods()
         return silk_profile(name='view')(csrf_exempt(super().as_view(**init_kwargs)))
 
     def handle_exception(self, exception):
@@ -128,27 +150,32 @@ class BaseView(GenericAPIView):
             raise exceptions.NotAuthenticated()
         raise exceptions.PermissionDenied(detail=message, code=code)
 
-    def perform_authentication(self, request):
-        """Lazy authentication"""
-        pass
+    def list(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def _create_serializer(self):
+    def create(self):
         serializer = self.get_serializer(data=self.request.data)
-        serializer.is_valid(raise_exception=True)
-        return serializer
+        serializer.is_valid()
+        serializer.save()
+        return Response({'id': serializer.instance.pk}, status=status.HTTP_201_CREATED)
 
-    def _create_action(self):
-        return self.action_map.get(self.method, BaseAction)(self)
+    def retrieve(self):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
-    def _create_response(self, result_data):
-        self.serializer.instance = result_data
-        return Response(
-            self.serializer.data,
-            status=204 if not result_data else status_by_method(self.method),
-        )
+    def update(self):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=self.request.data, partial=True)
+        serializer.is_valid()
+        serializer.save()
 
-    def handle(self):
-        self.serializer = self._create_serializer()
-        action = self._create_action()
-        data = action.dto(**self.serializer.validated_data)
-        return self._create_response(action.run(data))
+    def destroy(self):
+        instance = self.get_object()
+        instance.delete()

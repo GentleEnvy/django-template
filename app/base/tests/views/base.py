@@ -46,6 +46,9 @@ class BaseViewTest(BaseTest):
             self._me.delete()
             self._me = None
 
+    def setUp(self):
+        _ = self.me
+
     def get(self, path=None, query=None):
         return self.client.get(f'{path or self.path}?{urlencode(query or {})}')
 

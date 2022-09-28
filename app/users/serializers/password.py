@@ -1,14 +1,14 @@
 from rest_framework import serializers
 
 from app.base.exceptions import APIWarning
-from app.base.schemas.mixins import SerializerSchemaMixin
+from app.base.serializers.base import BaseModelSerializer
 from app.users.models import User
 
 
-class POST_UsersPasswordSerializer(serializers.ModelSerializer):
+class POST_UsersPasswordSerializer(BaseModelSerializer):
     WARNINGS = {
         404: APIWarning(
-            'Пользователя с таким email не существует',
+            "User with this email not found",
             404,
             'password_forgot_email_not_found',
         )
@@ -16,26 +16,22 @@ class POST_UsersPasswordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        extra_kwargs = {'email': {'validators': [], 'write_only': True}}
-        fields = list(extra_kwargs.keys())
+        write_only_fields = ['email']
 
     def validate(self, attrs):
-        if not User.objects.filter(email=attrs['email']).exists():
+        user_manager = User.objects
+        if not user_manager.filter(email=attrs['email']).exists():
             raise self.WARNINGS[404]
         return attrs
 
 
-class PUT_UsersPasswordSerializer(SerializerSchemaMixin, serializers.ModelSerializer):
-    WARNINGS = {408: APIWarning('Сессия просрочена', 408, 'password_session_time_out')}
+class PUT_UsersPasswordSerializer(BaseModelSerializer):
+    WARNINGS = {408: APIWarning("Session has expired", 408, 'password_session_timeout')}
 
     session_id = serializers.CharField(write_only=True)
     token = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
-        extra_kwargs = {
-            'session_id': {},
-            'new_password': {'write_only': True, 'source': 'password'},
-            'token': {},
-        }
-        fields = list(extra_kwargs.keys())
+        extra_kwargs = {'new_password': {'write_only': True, 'source': 'password'}}
+        fields = ['session_id', 'new_password', 'token']

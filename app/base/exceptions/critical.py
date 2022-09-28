@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status as rest_status
 from rest_framework.exceptions import APIException as RestAPIException
 
-from app.base.exceptions.base import *
+from app.base.exceptions.base import CastSupportsError
 from app.base.exceptions.utils import extract_detail
 from app.base.logs import critical
 

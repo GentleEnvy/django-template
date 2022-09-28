@@ -1,17 +1,17 @@
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
-
-from app.users.views.base import BaseAuthView
+from app.base.utils.common import response_204
+from app.base.views.base import BaseView
 from app.users.serializers.me.general import *
 
 
-class UsersMeView(RetrieveModelMixin, UpdateModelMixin, BaseAuthView):
+class UsersMeView(BaseView):
     serializer_map = {'get': GET_UsersMeSerializer, 'patch': PATCH_UsersMeSerializer}
 
-    def get(self, request):
-        return self.retrieve(request)
+    def get(self):
+        return self.retrieve()
 
-    def patch(self, request):
-        return self.partial_update(request)
+    @response_204
+    def patch(self):
+        return self.update()
 
     def get_object(self):
         return self.request.user

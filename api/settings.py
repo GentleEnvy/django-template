@@ -24,16 +24,10 @@ env = environ.Env(
     ANON_THROTTLE_RATE=(str, '1000/s'),
     USER_THROTTLE_RATE=(str, '10000/s'),
     VERIFICATION_CODE_TIMEOUT=(int, 86400),
-    VERIFICATION_ACTIVATE_SUCCESS_URL=(
-        str,
-        'https://local.dev#!/activate/success?token=%s',
-    ),
-    VERIFICATION_ACTIVATE_FAILURE_URL=(str, 'https://local.dev#!/activate/failure'),
-    VERIFICATION_PASSWORD_SUCCESS_URL=(
-        str,
-        'https://local.dev#!/password/success?session=%s',
-    ),
-    VERIFICATION_PASSWORD_FAILURE_URL=(str, 'https://local.dev#!/password/failure'),
+    VERIFICATION_ACTIVATE_SUCCESS_PATH=(str, '#!/activate/success?token=%s'),
+    VERIFICATION_ACTIVATE_FAILURE_PATH=(str, '#!/activate/failure'),
+    VERIFICATION_PASSWORD_SUCCESS_PATH=(str, '#!/password/success?session_id=%s'),
+    VERIFICATION_PASSWORD_FAILURE_PATH=(str, '#!/password/failure'),
     EMAIL_BACKEND=(str, None),
     LOG_CONF=(_env_value, {'api': ['api_console'], 'django.server': ['web_console']}),
     LOG_PRETTY=(bool, True),
@@ -106,17 +100,17 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
-        'drf_orjson_renderer.renderers.ORJSONRenderer',
+        'app.base.renderers.ORJSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     'DEFAULT_PARSER_CLASSES': [
-        'drf_orjson_renderer.parsers.ORJSONParser',
+        'app.base.parsers.ORJSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'app.users.authentications.token.TokenAuthentication',
-        'app.users.authentications.session.SessionAuthentication',
+        'app.base.authentications.token.TokenAuthentication',
+        'app.base.authentications.session.SessionAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'app.base.paginations.base.BasePagination',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -142,8 +136,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     # third-party middlewares
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    # own middlewares
     'silk.middleware.SilkyMiddleware',
+    # own middlewares
+    'app.base.middlewares.log.LogMiddleware',
 ]
 
 TEMPLATES = [
@@ -224,10 +219,18 @@ CELERY_EMAIL_CHUNK_SIZE = 1
 # verification
 
 VERIFICATION_CODE_TIMEOUT = env('VERIFICATION_CODE_TIMEOUT')
-VERIFICATION_ACTIVATE_SUCCESS_URL = env('VERIFICATION_ACTIVATE_SUCCESS_URL')
-VERIFICATION_ACTIVATE_FAILURE_URL = env('VERIFICATION_ACTIVATE_FAILURE_URL')
-VERIFICATION_PASSWORD_SUCCESS_URL = env('VERIFICATION_PASSWORD_SUCCESS_URL')
-VERIFICATION_PASSWORD_FAILURE_URL = env('VERIFICATION_PASSWORD_FAILURE_URL')
+VERIFICATION_ACTIVATE_SUCCESS_URL: str = (
+    f"https://{WEB_DOMAIN}{env('VERIFICATION_ACTIVATE_SUCCESS_PATH')}"
+)
+VERIFICATION_ACTIVATE_FAILURE_URL: str = (
+    f"https://{WEB_DOMAIN}{env('VERIFICATION_ACTIVATE_FAILURE_PATH')}"
+)
+VERIFICATION_PASSWORD_SUCCESS_URL: str = (
+    f"https://{WEB_DOMAIN}{env('VERIFICATION_PASSWORD_SUCCESS_PATH')}"
+)
+VERIFICATION_PASSWORD_FAILURE_URL: str = (
+    f"https://{WEB_DOMAIN}{env('VERIFICATION_PASSWORD_FAILURE_PATH')}"
+)
 
 # celery[broker]
 

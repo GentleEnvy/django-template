@@ -2,11 +2,11 @@ from django.conf import settings
 from django.contrib.auth import login
 from rest_framework.mixins import UpdateModelMixin
 
-from app.users.views.base import BaseAuthView
+from app.base.views.base import BaseView
 from app.users.serializers.me.password import *
 
 
-class UsersMePasswordView(UpdateModelMixin, BaseAuthView):
+class UsersMePasswordView(UpdateModelMixin, BaseView):
     serializer_map = {'put': PUT_UsersMePasswordSerializer}
 
     def put(self, request):

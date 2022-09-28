@@ -5,11 +5,10 @@ from rest_framework import serializers, status as rest_status
 from rest_framework.exceptions import (
     APIException as RestAPIException,
     AuthenticationFailed,
-    NotFound,
     Throttled,
 )
 
-from app.base.exceptions.base import *
+from app.base.exceptions.base import CastSupportsError
 from app.base.exceptions.utils import extract_detail
 from app.base.logs import warning
 from app.base.serializers.base import BaseSerializer
@@ -25,10 +24,6 @@ def _cast_rest_api_exception(exception: RestAPIException):
     )
 
 
-def _cast_404(exception: Http404):
-    return APIWarning(str(exception), rest_status.HTTP_404_NOT_FOUND, 'not_found')
-
-
 class APIWarning(CastSupportsError):
     TYPE_NAME = 'warning'
     LOG_FUNC = warning
@@ -36,8 +31,6 @@ class APIWarning(CastSupportsError):
     EXCEPTION__CAST = {
         AuthenticationFailed: _cast_rest_api_exception,
         Throttled: _cast_rest_api_exception,
-        Http404: _cast_404,
-        NotFound: _cast_404,
     }
 
     __schema_cache = {}
@@ -52,7 +45,7 @@ class APIWarning(CastSupportsError):
             json['error']['code'] = self.code
         return json
 
-    def to_schema(self, serializer_name: str = None):
+    def get_schema(self, serializer_name: str = None) -> OpenApiResponse:
         if serializer_name is None:
             if self.code:
                 serializer_name = self.code.capitalize()

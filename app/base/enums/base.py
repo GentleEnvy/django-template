@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import EnumMeta, unique
-from typing import Iterable, Type
+from typing import Type
 
 from django.db.models import (
     IntegerChoices as _IntegerChoices,
@@ -12,17 +12,17 @@ from django.utils.functional import Promise
 
 ChoicesMeta = getattr(enums, 'ChoicesMeta')
 
-__all__ = ['TextChoices', 'IntegerChoices']
+__all__ = ['BaseEnumStr', 'BaseEnumInt']
 
 
-class _BaseChoicesMeta(ChoicesMeta):
+class _BaseEnumMeta(ChoicesMeta):
     def __new__(cls, classname, bases, class_dict, **kwargs):
         labels = []
         for index, key in enumerate(getattr(class_dict, '_member_names')):
             value, label = cls._parse(index, key, class_dict[key])
             labels.append(label)
             dict.__setitem__(class_dict, key, value)
-        self: _BaseChoicesMeta = EnumMeta.__new__(
+        self: _BaseEnumMeta = EnumMeta.__new__(
             cls, classname, bases, class_dict, **kwargs
         )
         self.dict_by_value = self._value2label_map_ = dict(
@@ -38,7 +38,8 @@ class _BaseChoicesMeta(ChoicesMeta):
     def _parse(cls, index, key, value):
         raise NotImplementedError
 
-    def __help_text(self: Iterable) -> str:
+    def __help_text(self) -> str:
+        self: ChoicesMeta
         transcripts = []
         for member in self:
             if member.name.lower() == member.label.lower():
@@ -48,7 +49,7 @@ class _BaseChoicesMeta(ChoicesMeta):
         return '\n\n'.join(transcripts)
 
 
-class _TextChoicesMeta(_BaseChoicesMeta):
+class _TextEnumMeta(_BaseEnumMeta):
     @classmethod
     def _parse(cls, index, key, value):
         if isinstance(value, (list, tuple)):
@@ -66,13 +67,13 @@ class _TextChoicesMeta(_BaseChoicesMeta):
         return value, label
 
 
-class TextChoices(_TextChoices, metaclass=_TextChoicesMeta):
+class BaseEnumStr(_TextChoices, metaclass=_TextEnumMeta):
     help_text: str
-    dict_by_name: dict[str, TextChoices]
-    dict_by_value: dict[str, TextChoices]
+    dict_by_name: dict[str, BaseEnumStr]
+    dict_by_value: dict[str, BaseEnumStr]
 
 
-class _IntegerChoicesMeta(_BaseChoicesMeta):
+class _IntegerEnumMeta(_BaseEnumMeta):
     @classmethod
     def _parse(cls, index, key, value):
         if isinstance(value, (list, tuple)):
@@ -90,11 +91,11 @@ class _IntegerChoicesMeta(_BaseChoicesMeta):
         return value, label
 
 
-class IntegerChoices(_IntegerChoices, metaclass=_IntegerChoicesMeta):
+class BaseEnumInt(_IntegerChoices, metaclass=_IntegerEnumMeta):
     help_text: str
-    dict_by_name: dict[str, IntegerChoices]
-    dict_by_value: dict[int, IntegerChoices]
+    dict_by_name: dict[str, BaseEnumInt]
+    dict_by_value: dict[int, BaseEnumInt]
 
 
-TextChoices: Type[_TextChoices | TextChoices | str]
-IntegerChoices: Type[_IntegerChoices | IntegerChoices | int]
+BaseEnumStr: Type[_TextChoices | BaseEnumStr | str]
+BaseEnumInt: Type[_IntegerChoices | BaseEnumInt | int]

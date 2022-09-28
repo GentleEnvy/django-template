@@ -2,14 +2,14 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework.authentication import TokenAuthentication as _TokenAuthentication
 
 from app.base.exceptions import APIWarning
-from app.users.authentications.utils import get_header
+from app.base.authentications.utils import get_header
 from app.users.models import Token
 
 
 class TokenAuthentication(_TokenAuthentication):
     keyword = ''
 
-    WARNING_401 = APIWarning('Неверный токен', 401, 'invalid_token')
+    WARNING_401 = APIWarning("Invalid token", 401, 'invalid_token')
 
     def _on_auth_fail(self):
         raise self.WARNING_401

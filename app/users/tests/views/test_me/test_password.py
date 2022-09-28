@@ -4,14 +4,14 @@ from app.users.models import User
 from app.users.serializers.me.password import PUT_UsersMePasswordSerializer
 
 
-class UsersRegisterTest(BaseViewTest):
+class UsersMePasswordTest(BaseViewTest):
     path = '/users/me/password/'
 
     def test_put(self):
         new_password = fake.password()
         self._test(
             'put',
-            {'id': self.me.id},
+            {},
             {'old_password': self.me.raw_password, 'new_password': new_password},
         )
         self.assert_true(User.objects.get(id=self.me.id).check_password(new_password))

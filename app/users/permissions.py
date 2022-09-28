@@ -2,7 +2,10 @@ from app.base.permissions.base import BasePermission
 
 
 class IsAuthenticatedPermission(BasePermission):
-    message = 'Вы не авторизованы'
+    message = "You aren't authenticated"
+
+    def check(self, user):
+        return getattr(user, 'is_authenticated', False)
 
     def _has_permission(self, request, view):
-        return getattr(request.user, 'is_authenticated', False)
+        return self.check(request.user)

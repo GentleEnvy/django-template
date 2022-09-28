@@ -6,6 +6,7 @@ from django.utils.crypto import get_random_string
 from templated_mail.mail import BaseEmailMessage
 
 
+# FIXME: django cache -> Cache
 class EmailVerificationService:
     CACHE_PREFIX = 'verification'
 
@@ -21,7 +22,6 @@ class EmailVerificationService:
         email = email_message.to[0]
         email_message.context.setdefault('email', email)
         email_message.context.setdefault('code', self._get_cached_code(email))
-        email_message.context.setdefault('path', email_message.request.get_full_path())
 
     def _get_cache_key(self, email: str) -> str:
         return f'{self.CACHE_PREFIX}:{self.scope}:{email}'

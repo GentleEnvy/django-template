@@ -1,69 +1,60 @@
-import dataclasses
-
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
+from pydantic.networks import HttpUrl, EmailStr
+from rest_framework.request import Request
 from templated_mail.mail import BaseEmailMessage
 
 from app.base.actions.base import BaseAction
+from app.base.entities.base import BaseEntity
 from app.users.models import User
 from app.users.services.auth import AuthService
 from app.users.services.email_verification import EmailVerificationService
 
-ACTIVATE_SUCCESS_URL = settings.VERIFICATION_ACTIVATE_SUCCESS_URL
-ACTIVATE_FAILURE_URL = settings.VERIFICATION_ACTIVATE_FAILURE_URL
-
 
 class GET_UsersRegisterAction(BaseAction):
-    def __init__(self, view):
-        super().__init__(view)
-        self.email_verification = EmailVerificationService(scope='register')
-
-    @dataclasses.dataclass
-    class DTO:
-        email: str
+    class InEntity(BaseEntity):
+        request: Request
+        email: EmailStr
         code: str
 
-    def dto(self):
-        try:
-            return self.DTO(**{k: v for k, v in self.view.request.query_params.items()})
-        except TypeError:
-            return None
+    class OutEntity(BaseEntity):
+        url: HttpUrl
 
-    def run(self, data: DTO):
-        if data is None:
-            return ACTIVATE_FAILURE_URL
+    def __init__(self):
+        self.email_verification = EmailVerificationService(scope='register')
+        self.user_manager = User.objects
+
+    def run(self, data: InEntity) -> OutEntity:
         if self.email_verification.check(data.email, data.code):
             try:
-                user = User.objects.get(email=data.email)
+                user = self.user_manager.get(email=data.email)
             except User.DoesNotExist:
-                return ACTIVATE_FAILURE_URL
+                return self.OutEntity(url=settings.VERIFICATION_ACTIVATE_FAILURE_URL)
             user.is_active = True
             user.save()
-            token = AuthService(self.view.request, user).login()
-            return ACTIVATE_SUCCESS_URL % token
-        return ACTIVATE_FAILURE_URL
+            token = AuthService().login(user, data.request)
+            print(settings.VERIFICATION_ACTIVATE_SUCCESS_URL % token)
+            return self.OutEntity(
+                url=settings.VERIFICATION_ACTIVATE_SUCCESS_URL % token
+            )
+        return self.OutEntity(url=settings.VERIFICATION_ACTIVATE_FAILURE_URL)
 
 
 class POST_UsersRegisterAction(BaseAction):
-    def __init__(self, view):
-        super().__init__(view)
-        self.email_verification = EmailVerificationService(scope='register')
-
-    @dataclasses.dataclass
-    class dto:
-        email: str
+    class InEntity(BaseEntity):
+        email: EmailStr
         password: str
-        first_name: str | None = dataclasses.field(default=None)
-        last_name: str | None = dataclasses.field(default=None)
 
-    def run(self, data: dto):
-        data.password = make_password(data.password)
-        user = self.view.serializer.create(data.__dict__ | {'is_active': False})
+    OutEntity = User
+
+    def __init__(self):
+        self.email_verification = EmailVerificationService(scope='register')
+        self.user_manager = User.objects
+
+    def run(self, data: InEntity) -> OutEntity:
+        user = self.user_manager.create_user(
+            email=data.email, password=data.password, is_active=False
+        )
         self.email_verification.send(
-            BaseEmailMessage(
-                request=self.view.request,
-                template_name='users/activation.html',
-                to=[user.email],
-            )
+            BaseEmailMessage(template_name='users/activation.html', to=[user.email])
         )
         return user

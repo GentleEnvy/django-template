@@ -2,11 +2,12 @@ from typing import Any, TypeVar
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.db import models
+from rest_framework.fields import IntegerField
 from rest_framework.response import Response
 
-from app.base.utils.schema import extend_schema
+from app.base.utils.schema import extend_schema, schema_serializer
 
-__all__ = ['status_by_method', 'add_query_params', 'response_204']
+__all__ = ['status_by_method', 'add_query_params', 'response_204', 'response_201']
 
 _Choices = TypeVar('_Choices', bound=models.Choices)
 
@@ -30,8 +31,20 @@ def add_query_params(url: str, **query_params: Any) -> str:
 
 
 def response_204(f):
-    def _f_decorator(*args, **kwargs):
-        f(*args, **kwargs)
+    def _f_decorator(self):
+        f(self)
         return Response(status=204)
 
-    return extend_schema(responses={201: None, 204: ''})(_f_decorator)
+    return extend_schema(responses={200: None, 201: None, 204: ''})(_f_decorator)
+
+
+def response_201(f):
+    def _f_decorator(self):
+        return f(self)
+
+    return extend_schema(
+        responses={
+            200: None,
+            201: schema_serializer('Created', id=IntegerField(read_only=True)),
+        }
+    )(_f_decorator)
