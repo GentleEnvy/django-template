@@ -14,11 +14,6 @@ class UsersPasswordView(BaseView):
         'post': POST_UsersPasswordSerializer,
         'put': PUT_UsersPasswordSerializer,
     }
-    action_map = {
-        'get': GET_UsersPasswordAction,
-        'post': POST_UsersPasswordAction,
-        'put': PUT_UsersPasswordAction,
-    }
 
     @extend_schema(
         responses={
