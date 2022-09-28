@@ -8,9 +8,6 @@ from app.base.views.base import BaseView
 from app.users.serializers.password import *
 from app.users.actions.password import *
 
-PASSWORD_SUCCESS_URL = settings.VERIFICATION_PASSWORD_SUCCESS_URL
-PASSWORD_FAILURE_URL = settings.VERIFICATION_PASSWORD_FAILURE_URL
-
 
 class UsersPasswordView(BaseView):
     serializer_map = {
