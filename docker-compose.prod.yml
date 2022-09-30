@@ -27,7 +27,7 @@ services:
     command: bash -c "
         python manage.py migrate &&
         python manage.py collectstatic --noinput &&
-        python manage.py runserver 0.0.0.0:8000
+        gunicorn api.wsgi -c gunicorn_conf.py
       "
     environment:
       - DATABASE_URL=psql://user:password@db:5432/db
@@ -45,6 +45,33 @@ services:
     networks:
       - db_network
       - redis_network
+      - nginx_network
+    restart: unless-stopped
+  web:
+    image: node:14.0.0
+    volumes:
+      - web_volume:/build
+  nginx:
+    image: nginx:1.21.6
+    depends_on:
+      - api
+      - web
+    env_file:
+      - .env
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.conf
+      - API_DOMAIN=api.local.dev
+      - WEB_DOMAIN=local.dev
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - static_volume:/static
+      - web_volume:/html
+      - ./nginx.conf.conf:/etc/nginx/templates/nginx.conf.conf
+      - ./certs:/certs
+    networks:
+      - nginx_network
     restart: unless-stopped
   celery:
     build:
@@ -56,7 +83,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - api
+      - nginx
     networks:
       - db_network
       - redis_network
@@ -79,9 +106,11 @@ services:
 
 volumes:
   db_volume:
+  web_volume:
   static_volume:
   profile_volume:
 
 networks:
   db_network:
   redis_network:
+  nginx_network:
