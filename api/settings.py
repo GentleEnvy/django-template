@@ -88,11 +88,11 @@ INSTALLED_APPS = [
     'django_filters',
     'django_cleanup',
     'django_pickling',
-    'cacheops',
     'silk',
     'drf_spectacular',
     'django_celery_beat',
     'djcelery_email',
+    'cachalot',
     # own apps
     'app.base',
     'app.users',
@@ -176,16 +176,20 @@ REDIS_URL = _default_cache['LOCATION']
 
 # cacheops
 
-CACHEOPS_REDIS = REDIS_URL
+# CACHEOPS_REDIS = REDIS_URL
+#
+# CACHEOPS_DEFAULTS = {
+#     'timeout': 60 * 60,
+#     'cache_on_save': True,
+#     'ops': ['get', 'fetch', 'exists', 'count'],
+# }
+# CACHEOPS = {'authtoken.*': {}, 'users.*': {}}
+#
+# CACHEOPS_DEGRADE_ON_FAILURE = True
 
-CACHEOPS_DEFAULTS = {
-    'timeout': 60 * 60,
-    'cache_on_save': True,
-    'ops': ['get', 'fetch', 'exists', 'count'],
-}
-CACHEOPS = {'authtoken.*': {}, 'users.*': {}}
+# cachalot
 
-CACHEOPS_DEGRADE_ON_FAILURE = True
+...
 
 # email
 
