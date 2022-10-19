@@ -2,12 +2,17 @@
 
 import importlib
 from functools import partial
+import logging
 import os
 from pathlib import Path
-import warnings
 
 # noinspection PyPackageRequirements
 import environ
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 from app.base.logs.configs import LogConfig
 
@@ -28,7 +33,7 @@ env = environ.Env(
     VERIFICATION_ACTIVATE_FAILURE_PATH=(str, '#!/activate/failure'),
     VERIFICATION_PASSWORD_SUCCESS_PATH=(str, '#!/password/success?session_id=%s'),
     VERIFICATION_PASSWORD_FAILURE_PATH=(str, '#!/password/failure'),
-    EMAIL_BACKEND=(str, None),
+    EMAIL_BACKEND=(str, None),  # default: 'console' if DEBUG else 'smtp'
     LOG_CONF=(_env_value, {'api': ['api_console'], 'django.server': ['web_console']}),
     LOG_PRETTY=(bool, True),
     LOG_MAX_LENGTH=(int, 130),
@@ -46,8 +51,10 @@ env = environ.Env(
     CELERY_REDIS_MAX_CONNECTIONS=(int, 2),
     CELERY_BROKER_POOL_LIMIT=int,  # default: CELERY_REDIS_MAX_CONNECTIONS
     CELERY_TASK_EAGER=(bool, False),
-    ADMINS=(_env_value, {}),
+    SESSION_ON_LOGIN=bool,  # default: DEBUG
+    USE_SILKY=bool,  # default: DEBUG
     CLOUDINARY_URL=(str, None),
+    SENTRY_DSN=(str, None),
 )
 
 # root
@@ -90,6 +97,8 @@ INSTALLED_APPS = [
     'django_pickling',
     'cacheops',
     'silk',
+    'cloudinary',
+    'cloudinary_storage',
     'drf_spectacular',
     'django_celery_beat',
     'djcelery_email',
@@ -201,11 +210,7 @@ try:
         env.email('EMAIL_URL', backend='djcelery_email.backends.CeleryEmailBackend')
     )
 except environ.ImproperlyConfigured:
-    warnings.warn("EMAIL_URL isn't set")
-
-vars().update(
-    env.email('EMAIL_URL', backend='djcelery_email.backends.CeleryEmailBackend')
-)
+    pass
 
 # celery_email
 
@@ -264,7 +269,11 @@ CELERY_BEAT_SCHEDULE = {}
 
 # media
 
+if (CLOUDINARY_URL := env('CLOUDINARY_URL')) is not None:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR + 'media'
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 # static
@@ -273,14 +282,11 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR + 'static'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
 # silk
 
+USE_SILKY = env('USE_SILKY', default=DEBUG)
 
-def SILKY_INTERCEPT_FUNC(_):
-    return DEBUG
-
-
+SILKY_INTERCEPT_FUNC = lambda _: USE_SILKY
 SILKY_META = True
 SILKY_ANALYZE_QUERIES = True
 SILKY_PYTHON_PROFILER = True
@@ -291,6 +297,23 @@ if not os.path.exists(SILKY_PYTHON_PROFILER_RESULT_PATH):
 
 SILKY_MAX_RECORDED_REQUESTS = 1_000
 SILKY_MAX_RECORDED_REQUESTS_CHECK_PERCENT = 50
+
+# sentry
+
+if (SENTRY_DSN := env('SENTRY_DSN')) is not None:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            LoggingIntegration(
+                level=logging.DEBUG,
+                event_level=logging.ERROR,
+            ),
+            DjangoIntegration(),
+            RedisIntegration(),
+        ],
+        environment={True: 'Dev', False: 'Prod'}[DEBUG],
+        traces_sample_rate=1,
+    )
 
 # swagger
 
@@ -309,7 +332,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # auth
 
 AUTH_USER_MODEL = 'users.User'
-SESSION_ON_LOGIN = env('SESSION_ON_LOGIN', bool, DEBUG)
+SESSION_ON_LOGIN = env('SESSION_ON_LOGIN', default=DEBUG)
 
 # password
 

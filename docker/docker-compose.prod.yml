@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+  redis:
+    extends:
+      file: docker-compose.base.yml
+      service: redis
+  api:
+    extends:
+      file: docker-compose.base.yml
+      service: api
+    command: bash -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn api.wsgi -c gunicorn_conf.py
+      "
+    depends_on:
+      - db
+      - redis
+  celery:
+    extends:
+      file: docker-compose.base.yml
+      service: celery
+    depends_on:
+      - db
+      - redis
+  celery_beat:
+    extends:
+      file: docker-compose.base.yml
+      service: celery_beat
+    depends_on:
+      - db
+      - redis
+  web:
+    extends:
+      file: docker-compose.base.yml
+      service: web
+  nginx:
+    extends:
+      file: docker-compose.base.yml
+      service: nginx
+    depends_on:
+      - api
+
+volumes:
+  db_volume:
+  static_volume:
+  profile_volume:
+  web_volume:
+
+networks:
+  db_network:
+  redis_network:
+  nginx_network:

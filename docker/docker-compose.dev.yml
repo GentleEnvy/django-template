@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+  redis:
+    extends:
+      file: docker-compose.base.yml
+      service: redis
+  api:
+    extends:
+      file: docker-compose.base.yml
+      service: api
+    ports:
+      - 8000:8000
+    command: bash -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    depends_on:
+      - db
+      - redis
+  celery:
+    extends:
+      file: docker-compose.base.yml
+      service: celery
+    depends_on:
+      - db
+      - redis
+  celery_beat:
+    extends:
+      file: docker-compose.base.yml
+      service: celery_beat
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  db_volume:
+  static_volume:
+  profile_volume:
+
+networks:
+  db_network:
+  redis_network:
