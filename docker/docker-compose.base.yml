@@ -24,7 +24,6 @@ services:
   api:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
     env_file:
       - ../envs/.base.env
     environment:
