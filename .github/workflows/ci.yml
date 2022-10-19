@@ -12,4 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Run tests
-      run: docker-compose -f docker/docker-compose.test.yml run api
+      run: |
+        pwd
+        ls -al
+        docker-compose -f docker/docker-compose.test.yml run api
