@@ -63,7 +63,7 @@ services:
     volumes:
       - static_volume:/api/static
       - web_volume:/usr/share/nginx/html
-      - ./nginx.conf.conf:/etc/nginx/templates/nginx.conf.conf:ro
+      - ./nginx/nginx.conf.conf:/etc/nginx/templates/nginx.conf.conf:ro
       - ./certs:/api/certs
     networks:
       - nginx_network
