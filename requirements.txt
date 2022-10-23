@@ -35,3 +35,4 @@ django-silk==5.0.1
 parameterized==0.8.1
 factory_boy==3.2.1
 Faker==14.1
+coverage==6.5.0
