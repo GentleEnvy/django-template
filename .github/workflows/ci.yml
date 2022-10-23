@@ -11,13 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Run tests
-      run: docker-compose -f docker/docker-compose.test.yml run api
-  checks:
-    runs-on: ubuntu-latest
-    steps:
+    - name: Check formatting
     - uses: RojerGS/python-black-check@master
       with:
         line-length: '80'
         path: '.'
         exclude: '(/*.html|/*.mo|/*.po|/*.png|/*.rst)'
+    - name: Run tests
+      run: docker-compose -f docker/docker-compose.test.yml run api
