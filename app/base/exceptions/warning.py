@@ -1,4 +1,3 @@
-from django.http import Http404
 from django.utils.crypto import get_random_string
 from drf_spectacular.utils import OpenApiResponse
 from rest_framework import serializers, status as rest_status

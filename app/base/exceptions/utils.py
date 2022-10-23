@@ -12,5 +12,5 @@ def extract_detail(api_exception: APIException):
         elif isinstance(detail, list):
             return [_extract_detail(d) for d in detail]
         return detail
-    
+
     return _extract_detail(api_exception.get_full_details())

@@ -34,7 +34,7 @@ class GET_UsersPasswordAction:
 class POST_UsersPasswordAction:
     class InEntity(BaseEntity):
         email: str
-    
+
     def __init__(self):
         self.email_verification = EmailVerificationService(scope='password')
 

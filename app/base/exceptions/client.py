@@ -31,7 +31,7 @@ def _cast_http_404(exception: Http404):
 
 class ClientError(CastSupportsError):
     TYPE_NAME = 'client_error'
-    
+
     EXCEPTION__CAST = {
         RestValidationError: _cast_rest_validation_error,
         ParseError: _cast_rest_api_exception,
@@ -42,7 +42,7 @@ class ClientError(CastSupportsError):
         MethodNotAllowed: _cast_rest_api_exception,
         UnsupportedMediaType: _cast_rest_api_exception,
     }
-    
+
     def __init__(self, detail=None, status=None):
         super().__init__(
             detail or 'Client error', status or rest_status.HTTP_400_BAD_REQUEST

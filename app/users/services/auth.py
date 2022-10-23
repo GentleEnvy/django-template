@@ -8,7 +8,7 @@ from app.users.models import Token, User
 class AuthService:
     def __init__(self):
         self.token_manager = Token.objects
-    
+
     def login(self, user: User, request=None) -> Token:
         token = self.token_manager.get_or_create(user=user)[0]
         if settings.SESSION_ON_LOGIN:

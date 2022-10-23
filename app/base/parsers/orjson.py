@@ -18,9 +18,9 @@ class ORJSONParser(BaseParser):
     """
     Parses JSON-serialized data by orjson parser.
     """
-    
+
     media_type: str = "application/json"
-    
+
     def parse(
         self,
         data_or_stram: str | bytes | bytearray | memoryview | IO,
