@@ -22,9 +22,9 @@ jobs:
     - name: Run tests
       run: docker-compose -f docker/docker-compose.test.yml run api
     - run: ls -al
-    - run: ls -al ./docker
+    - run: ls -al ./coverages
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./docker/coverage.xml
+        files: ./coverages/coverage.xml
