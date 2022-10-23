@@ -19,10 +19,11 @@ services:
         python manage.py migrate
         && coverage run manage.py test
         && coverage report
-        && coverage xml
+        && coverage xml -o /api/coverages/coverage.xml
+        && ls -al /api/coverages
       "
     volumes:
-      - ./docker:/api/docker
+      - ../coverages:/api/coverages
     depends_on:
       - db
       - redis
