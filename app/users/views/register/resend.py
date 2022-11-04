@@ -1,7 +1,7 @@
 from app.base.utils.common import response_204
 from app.base.views.base import BaseView
-from app.users.serializers.register.resend import *
 from app.users.actions.register.resend import *
+from app.users.serializers.register.resend import *
 
 
 class UsersRegisterResendView(BaseView):

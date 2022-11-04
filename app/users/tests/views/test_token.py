@@ -1,7 +1,7 @@
 from app.base.tests.fakers import fake
 from app.base.tests.views.base import BaseViewTest
-from app.users.models import Token
 from app.users.enums.users import UserType
+from app.users.models import Token
 from app.users.serializers.token import POST_UsersTokenSerializer
 
 

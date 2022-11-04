@@ -4,7 +4,7 @@
 
 # Didn't pip install because https://github.com/brianjbuck/drf_orjson_renderer/issues/20
 
-from typing import Any, Optional, IO
+from typing import IO, Any, Optional
 
 import orjson
 from django.conf import settings

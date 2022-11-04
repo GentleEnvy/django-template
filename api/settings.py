@@ -1,14 +1,12 @@
 # imports
 
 import importlib
-from functools import partial
 import logging
 import os
-from pathlib import Path
+from functools import partial
 
 # noinspection PyPackageRequirements
 import environ
-
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -286,7 +284,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 USE_SILKY = env('USE_SILKY', default=DEBUG)
 
-SILKY_INTERCEPT_FUNC = lambda _: USE_SILKY
+SILKY_INTERCEPT_FUNC = lambda _: USE_SILKY  # noqa: E731
 SILKY_META = True
 SILKY_ANALYZE_QUERIES = True
 SILKY_PYTHON_PROFILER = True

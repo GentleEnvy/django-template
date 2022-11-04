@@ -1,5 +1,5 @@
 from django.conf import settings
-from pydantic.networks import HttpUrl, EmailStr
+from pydantic.networks import EmailStr, HttpUrl
 from rest_framework.request import Request
 from templated_mail.mail import BaseEmailMessage
 

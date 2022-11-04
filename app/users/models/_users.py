@@ -6,8 +6,8 @@ from django.db import models
 from django.utils import timezone
 
 from app.base.models.base import BaseModel
-from app.users.managers import UserManager
 from app.users.enums.users import UserType
+from app.users.managers import UserManager
 
 __all__ = ['User']
 

@@ -1,11 +1,9 @@
 from django.utils.crypto import get_random_string
 from drf_spectacular.utils import OpenApiResponse
-from rest_framework import serializers, status as rest_status
-from rest_framework.exceptions import (
-    APIException as RestAPIException,
-    AuthenticationFailed,
-    Throttled,
-)
+from rest_framework import serializers
+from rest_framework import status as rest_status
+from rest_framework.exceptions import APIException as RestAPIException
+from rest_framework.exceptions import AuthenticationFailed, Throttled
 
 from app.base.exceptions.base import CastSupportsError
 from app.base.exceptions.utils import extract_detail

@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from app.base.utils.common import response_204
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
-from app.users.serializers.password import *
 from app.users.actions.password import *
+from app.users.serializers.password import *
 
 
 class UsersPasswordView(BaseView):

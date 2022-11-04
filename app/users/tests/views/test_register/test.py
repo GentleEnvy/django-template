@@ -8,8 +8,8 @@ from parameterized import parameterized
 
 from app.base.tests.fakers import fake
 from app.base.tests.views.base import BaseViewTest
-from app.users.models import Token, User
 from app.users.enums.users import UserType
+from app.users.models import Token, User
 from app.users.serializers.register import POST_UsersRegisterSerializer
 from app.users.services.email_verification import EmailVerificationService
 from app.users.tests.factories.users import UserFactory

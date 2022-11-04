@@ -1,6 +1,6 @@
 from app.base.serializers.base import BaseModelSerializer
-from app.users.models import User
 from app.users.enums.users import UserType
+from app.users.models import User
 
 
 class GET_UsersMeSerializer(BaseModelSerializer):

@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from app.base.utils.common import response_201
 from app.base.utils.schema import extend_schema
 from app.base.views.base import BaseView
-from app.users.serializers.register.general import *
 from app.users.actions.register.general import *
+from app.users.serializers.register.general import *
 
 
 class UsersRegisterView(BaseView):

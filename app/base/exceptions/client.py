@@ -1,15 +1,15 @@
 from django.http import Http404
 from rest_framework import status as rest_status
+from rest_framework.exceptions import APIException as RestAPIException
 from rest_framework.exceptions import (
-    APIException as RestAPIException,
     MethodNotAllowed,
     NotAuthenticated,
     NotFound,
     ParseError,
     PermissionDenied,
     UnsupportedMediaType,
-    ValidationError as RestValidationError,
 )
+from rest_framework.exceptions import ValidationError as RestValidationError
 
 from app.base.exceptions.base import *
 from app.base.exceptions.utils import extract_detail
