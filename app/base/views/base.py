@@ -28,25 +28,19 @@ def _exception_handler(exception):
         set_rollback()
         if settings.DEBUG and isinstance(exception, MethodNotAllowed):
             return Response(str(exception))
-        try:
+        try:  # MAYBE: use isinstance
             raise exception
-        except APIWarning as e:
-            api_error = e
-        except ClientError as e:
-            api_error = e
-        except CriticalError as e:
-            api_error = e
+        except (APIWarning, ClientError, CriticalError) as exc:
+            error = exc  # pylint:disable=W0621
         except tuple(APIWarning.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = APIWarning.cast_exception(exception_to_cast)
+            error = APIWarning.cast_exception(exception_to_cast)
         except tuple(ClientError.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = ClientError.cast_exception(exception_to_cast)
+            error = ClientError.cast_exception(exception_to_cast)
         except tuple(CriticalError.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = CriticalError.cast_exception(exception_to_cast)
+            error = CriticalError.cast_exception(exception_to_cast)
 
-        error = api_error
-
-    except Exception as e:
-        error = CriticalError(str(e))
+    except Exception as exc:  # pylint:disable=W0703
+        error = CriticalError(str(exc))
 
     error.log()
     return error.to_response()

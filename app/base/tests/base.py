@@ -25,13 +25,13 @@ class BaseTest(APITestCase):
                     if exp_value(value) is False:
                         self.fail(f'{exp_key = }, {value = }')
                 else:
-                    self.assert_is_instance(value, type(exp_value))
                     if isinstance(value, dict):
                         dfs(value, exp_value)
                     else:
                         self.assert_equal(value, exp_value)
 
-            [visit(*items) for items in inner_exp_json.items()]
+            for items in inner_exp_json.items():
+                visit(*items)
 
         dfs(json, exp_json)
 
@@ -56,8 +56,8 @@ class BaseTest(APITestCase):
                     )
                 except model.model.DoesNotExist:
                     self.fail(
-                        f'{model.model.__name__} matching query ({filters}) does not '
-                        f'exists'
+                        f"{model.model.__name__} matching query ({filters}) does not "
+                        f"exists"
                     )
             case _:
                 self.assert_instance(model, instance_data)

@@ -37,7 +37,7 @@ class AdminEmailHandler(DjangoAdminEmailHandler):
         if not admins:
             return
         mail = EmailMultiAlternatives(
-            '{}{}'.format(settings.EMAIL_SUBJECT_PREFIX, self.create_subject()),
+            f"{settings.EMAIL_SUBJECT_PREFIX}{self.create_subject()}",
             message,
             settings.SERVER_EMAIL,
             list(admins),

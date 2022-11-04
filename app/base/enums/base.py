@@ -24,8 +24,9 @@ class _BaseEnumMeta(ChoicesMeta):
         )
         self.dict_by_value = self._value2label_map_ = dict(
             zip(self._value2member_map_, labels)
-        )
-        self.dict_by_name = self._member_map_
+        )  # pylint:disable=W0212
+        self.dict_by_name = self._member_map_  # pylint:disable=W0212
+        # pylint:disable=W0212
         self.label = property(lambda self_: self._value2label_map_.get(self_.value))
         self.help_text = self.__help_text()
         # noinspection PyTypeChecker

@@ -24,9 +24,10 @@ class ORJSONParser(BaseParser):
     def parse(
         self,
         data_or_stram: str | bytes | bytearray | memoryview | IO,
-        media_type: Optional[Any] = None,
+        media_type: Optional[Any] = None,  # pylint:disable=W0613
         parser_context: Any = None,
     ) -> Any:
+
         """
         De-serializes JSON strings to Python objects.
         :param data_or_stram: A byte data or stream-like object representing the body
@@ -49,4 +50,4 @@ class ORJSONParser(BaseParser):
         try:
             return orjson.loads(data.decode(encoding))
         except orjson.JSONDecodeError as exc:
-            raise ParseError(f"JSON parse error - {exc}")
+            raise ParseError(f"JSON parse error - {exc}") from exc

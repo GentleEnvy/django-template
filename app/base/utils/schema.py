@@ -108,13 +108,9 @@ def extend_schema(
 
     def decorator(f):
         BaseSchema = (
-            # explicit manually set schema or previous view annotation
             getattr(f, 'schema', None)
-            # previously set schema with @extend_schema on views methods
             or getattr(f, 'kwargs', {}).get('schema', None)
-            # previously set schema with @extend_schema on @api_view
             or getattr(getattr(f, 'cls', None), 'kwargs', {}).get('schema', None)
-            # the default
             or api_settings.DEFAULT_SCHEMA_CLASS
         )
 
@@ -130,6 +126,9 @@ def extend_schema(
             return method_scope and version_scope
 
         class ExtendedSchema(BaseSchema):
+            view: Any
+            method: str
+
             _method__status = {
                 'GET': 200,
                 'POST': 201,
@@ -183,7 +182,7 @@ def extend_schema(
                     if isinstance(responses, dict):
                         if isinstance(super_responses, dict):
                             return super_responses | responses
-                        elif isinstance(super_responses, Serializer):
+                        if isinstance(super_responses, Serializer):
                             status = self._method__status[self.method]
                             return {status: super_responses} | responses
                     return responses
@@ -220,17 +219,13 @@ def extend_schema(
                 return super().get_filter_backends()
 
         if inspect.isclass(f):
-            # either direct decoration of views, or unpacked @api_view from
-            # OpenApiViewExtension
             if operation_id is not None or operation is not None:
                 error(
-                    f'using @extend_schema on viewset class {f.__name__} with '
-                    f'parameters '
-                    f'operation_id or operation will most likely result in a broken '
-                    f'schema.'
+                    f"using @extend_schema on viewset class {f.__name__} with "
+                    f"parameters "
+                    f"operation_id or operation will most likely result in a broken "
+                    f"schema."
                 )
-            # reorder schema class MRO so that view method annotation takes precedence
-            # over view class annotation. only relevant if there is a method annotation
             for view_method_name in get_view_method_names(view=f, schema=BaseSchema):
                 if 'schema' not in getattr(getattr(f, view_method_name), 'kwargs', {}):
                     continue
@@ -240,34 +235,18 @@ def extend_schema(
                     (view_method.kwargs['schema'], ExtendedSchema),
                     {},
                 )
-            # persist schema on class to provide annotation to derived view methods.
-            # the second purpose is to serve as base for view multi-annotation
             f.schema = ExtendedSchema()
             return f
-        elif callable(f) and hasattr(f, 'cls'):
-            # 'cls' attr signals that as_view() was called, which only applies to
-            # @api_view.
-            # keep a "unused" schema reference at root level for multi annotation
-            # convenience.
+        if callable(f) and hasattr(f, 'cls'):
             setattr(f.cls, 'kwargs', {'schema': ExtendedSchema})
-            # set schema on method kwargs context to emulate regular view behaviour.
             for method in f.cls.http_method_names:
                 setattr(getattr(f.cls, method), 'kwargs', {'schema': ExtendedSchema})
             return f
-        elif callable(f):
-            # custom actions have kwargs in their context, others don't. create it so
-            # our create_view
-            # implementation can overwrite the default schema
+        if callable(f):
             if not hasattr(f, 'kwargs'):
                 f.kwargs = {}
-            # this simulates what @action is actually doing. somewhere along the line
-            # in this process
-            # the schema is picked up from kwargs and used. it's involved my dear
-            # friends.
-            # use class instead of instance due to descriptor weakref reverse collisions
             f.kwargs['schema'] = ExtendedSchema
             return f
-        else:
-            return f
+        return f
 
     return decorator

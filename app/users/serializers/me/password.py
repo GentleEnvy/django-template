@@ -23,7 +23,7 @@ class PUT_UsersMePasswordSerializer(BaseModelSerializer):
             raise self.WARNINGS[403]
         return attrs
 
-    def update(self, user, validated_data):
-        user.set_password(validated_data['new_password'])
-        user.save()
-        return user
+    def update(self, instance: User, validated_data):
+        instance.set_password(validated_data['new_password'])
+        instance.save()
+        return instance

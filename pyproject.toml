@@ -3,6 +3,5 @@ skip-string-normalization = true
 
 [tool.vulture]
 paths = ['.']
-exclude = ['api', 'gunicorn']
 min_confidence = 90
 sort_by_size = true

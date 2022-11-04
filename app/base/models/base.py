@@ -14,7 +14,7 @@ class BaseModel(models.Model):
         update_fields=None,
         clean=True,
         clean_exclude=None,
-    ):
+    ):  # pylint:disable=R0913
         if clean:
             self.full_clean(exclude=clean_exclude)
         models.Model.save(self, force_insert, force_update, using, update_fields)

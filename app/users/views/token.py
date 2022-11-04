@@ -25,8 +25,8 @@ class UsersTokenView(BaseView):
             serializer.instance = action.run(
                 action.InEntity(**serializer.validated_data, request=self.request)
             ).dict()
-        except PermissionError:
-            raise serializer.WARNINGS[401]
+        except PermissionError as exc:
+            raise serializer.WARNINGS[401] from exc
         return Response(serializer.data, status=201)
 
     @response_204

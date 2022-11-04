@@ -10,10 +10,9 @@ class UsersMePasswordView(UpdateModelMixin, BaseView):
     serializer_map = {'put': PUT_UsersMePasswordSerializer}
 
     def put(self, request):
-        result = self.update(request)
         if settings.SESSION_ON_LOGIN:
             login(request, request.user)
-        return result
+        return self.update(request)
 
     def get_object(self):
         return self.request.user

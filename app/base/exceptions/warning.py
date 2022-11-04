@@ -8,7 +8,6 @@ from rest_framework.exceptions import AuthenticationFailed, Throttled
 from app.base.exceptions.base import CastSupportsError
 from app.base.exceptions.utils import extract_detail
 from app.base.logs import warning
-from app.base.serializers.base import BaseSerializer
 
 __all__ = ['APIWarning']
 
@@ -51,6 +50,8 @@ class APIWarning(CastSupportsError):
         try:
             serializer = self.__schema_cache[serializer_name]
         except KeyError:
+            from app.base.serializers.base import BaseSerializer  # pylint:disable=R0401
+
             serializer = type(
                 serializer_name,
                 (BaseSerializer,),

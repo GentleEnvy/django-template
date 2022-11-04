@@ -29,7 +29,7 @@ class UsersRegisterTest(BaseViewTest):
                 | {
                     'password': partial(check_password, data['password']),
                     'is_active': False,
-                    'type': UserType.DEFAULT.value,
+                    'type': UserType.DEFAULT,
                 },
                 id=id,
             )
