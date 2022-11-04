@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Type
-
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import exceptions, status
@@ -60,9 +58,9 @@ class BaseView(GenericAPIView):
     serializer_class = BaseSerializer
     permission_classes = []
     serializer_map: dict[
-        str, tuple[int, Type[BaseSerializer]] | Type[BaseSerializer]
+        str, tuple[int, type[BaseSerializer]] | type[BaseSerializer]
     ] = {}
-    permissions_map: dict[str, list[Type[BasePermission]]] = {}
+    permissions_map: dict[str, list[type[BasePermission]]] = {}
 
     @property
     def method(self) -> str:
@@ -71,14 +69,14 @@ class BaseView(GenericAPIView):
     @classmethod
     def _extract_serializer_class_with_status(
         cls, method_name: str
-    ) -> tuple[int, Type[BaseSerializer]] | None:
+    ) -> tuple[int, type[BaseSerializer]] | None:
         serializer_class = cls.serializer_map.get(method_name)
         if serializer_class and issubclass(serializer_class, BaseSerializer):
             http_status = status_by_method(method_name)
             return http_status, serializer_class
         return serializer_class
 
-    def get_serializer_class(self) -> Type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         serializer_class = self._extract_serializer_class_with_status(self.method)
         if serializer_class is None:
             return self.serializer_class
@@ -96,7 +94,7 @@ class BaseView(GenericAPIView):
     def get_object(self) -> BaseModel:
         return super().get_object()
 
-    def get_permission_classes(self) -> list[Type[BasePermission]]:
+    def get_permission_classes(self) -> list[type[BasePermission]]:
         return self.permission_classes + self.permissions_map.get(self.method, [])
 
     def get_permissions(self) -> list[BasePermission]:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import EnumMeta, unique
-from typing import Type
 
 from django.db.models import IntegerChoices as _IntegerChoices
 from django.db.models import TextChoices as _TextChoices
@@ -95,5 +94,5 @@ class BaseEnumInt(_IntegerChoices, metaclass=_IntegerEnumMeta):
     dict_by_value: dict[int, BaseEnumInt]
 
 
-BaseEnumStr: Type[_TextChoices | BaseEnumStr | str]
-BaseEnumInt: Type[_IntegerChoices | BaseEnumInt | int]
+BaseEnumStr: type[_TextChoices | BaseEnumStr | str]
+BaseEnumInt: type[_IntegerChoices | BaseEnumInt | int]

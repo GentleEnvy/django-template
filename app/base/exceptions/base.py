@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Final, Type
+from typing import Any, Callable, Final
 
 from django.conf import settings
 from rest_framework.response import Response
@@ -38,7 +38,7 @@ class LoggedException(APIException):
 
 
 class CastSupportsError(LoggedException):
-    EXCEPTION__CAST: dict[Type[Exception], Callable[[Exception], APIException]] = {}
+    EXCEPTION__CAST: dict[type[Exception], Callable[[Exception], APIException]] = {}
 
     @classmethod
     def cast_exception(cls, exception: Exception) -> APIException:
