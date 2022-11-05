@@ -1,4 +1,7 @@
-from typing import Any, Callable, Final
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any, Final
 
 from django.conf import settings
 from rest_framework.response import Response
