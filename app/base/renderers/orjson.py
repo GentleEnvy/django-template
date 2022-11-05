@@ -17,7 +17,6 @@ __all__ = ['ORJSONRenderer']
 
 
 class ORJSONRenderer(BaseRenderer):
-
     """
     Renderer which serializes to JSON.
     Uses the Rust-backed orjson library for serialization speed.
@@ -36,7 +35,6 @@ class ORJSONRenderer(BaseRenderer):
 
     @staticmethod
     def default(obj: Any) -> Any:
-
         """
         When orjson doesn't recognize an object type for serialization it passes
         that object to this function which then converts the object to its

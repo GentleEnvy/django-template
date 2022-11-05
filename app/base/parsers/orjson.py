@@ -15,9 +15,7 @@ __all__ = ['ORJSONParser']
 
 
 class ORJSONParser(BaseParser):
-    """
-    Parses JSON-serialized data by orjson parser.
-    """
+    """Parses JSON-serialized data by orjson parser."""
 
     media_type: str = "application/json"
 
@@ -27,7 +25,6 @@ class ORJSONParser(BaseParser):
         media_type: Optional[Any] = None,  # pylint:disable=W0613
         parser_context: Any = None,
     ) -> Any:
-
         """
         De-serializes JSON strings to Python objects.
         :param data_or_stram: A byte data or stream-like object representing the body
