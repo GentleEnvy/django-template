@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import OpenApiResponse
 from rest_framework import exceptions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import GenericAPIView
@@ -50,7 +51,7 @@ class BaseView(GenericAPIView):
     lookup_field = 'id'
     ordering = 'id'
     serializer_class = BaseSerializer
-    permission_classes = []
+    permission_classes: list[type[BasePermission]] = []
     serializer_map: dict[
         str, tuple[int, type[BaseSerializer]] | type[BaseSerializer]
     ] = {}
@@ -65,10 +66,9 @@ class BaseView(GenericAPIView):
         cls, method_name: str
     ) -> tuple[int, type[BaseSerializer]] | None:
         serializer_class = cls.serializer_map.get(method_name)
-        if serializer_class and issubclass(serializer_class, BaseSerializer):
-            http_status = status_by_method(method_name)
-            return http_status, serializer_class
-        return serializer_class
+        if serializer_class is None or isinstance(serializer_class, tuple):
+            return serializer_class
+        return status_by_method(method_name), serializer_class
 
     def get_serializer_class(self) -> type[BaseSerializer]:
         serializer_class = self._extract_serializer_class_with_status(self.method)
@@ -113,12 +113,12 @@ class BaseView(GenericAPIView):
                 method = getattr(cls, method_name)
             except AttributeError:
                 continue
-            responses = {}
+            responses: dict[int, OpenApiResponse] = {}
 
             extracted = cls._extract_serializer_class_with_status(method_name)
             if extracted:
                 serializer_class = extracted[1]
-                if get_schema := getattr(serializer_class, 'get_schema'):
+                if get_schema := getattr(serializer_class, 'get_schema', None):
                     responses |= get_schema(extracted[0])
 
             if IsAuthenticatedPermission in cls.get_permission_classes(cls()):

@@ -50,7 +50,7 @@ class POST_UsersRegisterAction(BaseAction):
         self.email_verification = EmailVerificationService(scope='register')
         self.user_manager = User.objects
 
-    def run(self, data: InEntity) -> OutEntity:
+    def run(self, data: InEntity) -> User:
         user = self.user_manager.create_user(
             email=data.email, password=data.password, is_active=False
         )

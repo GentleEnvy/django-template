@@ -31,10 +31,12 @@ class WrapFormatter(Formatter):
         super().__init__(*args, **kwargs)
         self._max_length: Final[int] = max_length
 
-    def format(self, record: CacheMessageLogRecord):
+    def format(self, record) -> str:
         formatted = super().format(record)
-        if settings.LOG_PRETTY and (
-            '\n' in record.message or len(formatted) > self._max_length
+        if (
+            settings.LOG_PRETTY
+            and ('\n' in record.message or len(formatted) > self._max_length)
+            and isinstance(record, CacheMessageLogRecord)
         ):
             old_message = record.message
             record.setMessage(_tab(_wrap(record.message, self._max_length)))

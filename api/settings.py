@@ -1,8 +1,8 @@
 # imports
-
 import importlib
 import logging
 import os
+from datetime import timedelta
 from functools import partial
 
 # noinspection PyPackageRequirements
@@ -190,7 +190,7 @@ CACHEOPS_DEFAULTS = {
     'cache_on_save': True,
     'ops': ['get', 'fetch', 'exists', 'count'],
 }
-CACHEOPS = {'authtoken.*': {}, 'users.*': {}}
+CACHEOPS: dict[str, dict[str, bool | int | None]] = {'authtoken.*': {}, 'users.*': {}}
 
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
@@ -263,7 +263,7 @@ CELERY_IGNORE_RESULT = False
 
 # celery beat
 
-CELERY_BEAT_SCHEDULE = {}
+CELERY_BEAT_SCHEDULE: dict[str, dict[str, str | timedelta]] = {}
 
 # media
 
@@ -351,22 +351,22 @@ LOG_FORMATTERS = env('LOG_FORMATTERS')
 LOG_PRETTY = env('LOG_PRETTY')
 LOG_MAX_LENGTH = env('LOG_MAX_LENGTH')
 
-_loggers = {
-    k: {
+_loggers: dict = {
+    key: {
         'handlers': list(
             map(
                 partial(
                     getattr,
                     importlib.import_module('.handlers', 'app.base.logs.configs'),
                 ),
-                v,
+                value,
             )
         )
     }
-    for k, v in env('LOG_CONF').items()
+    for key, value in env('LOG_CONF').items()
 }
-for k, v in env('LOG_LEVEL').items():
-    _loggers.setdefault(k, {})['level'] = v
+for key, value in env('LOG_LEVEL').items():
+    _loggers.setdefault(key, {})['level'] = value
 
 LOGGING = LogConfig(_loggers).to_dict()
 

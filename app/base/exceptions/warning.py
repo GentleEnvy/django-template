@@ -4,10 +4,12 @@ from rest_framework import serializers
 from rest_framework import status as rest_status
 from rest_framework.exceptions import APIException as RestAPIException
 from rest_framework.exceptions import AuthenticationFailed, Throttled
+from rest_framework.serializers import Serializer
 
 from app.base.exceptions.base import CastSupportsError
 from app.base.exceptions.utils import extract_detail
 from app.base.logs import warning
+from app.base.utils.schema import schema_serializer
 
 __all__ = ['APIWarning']
 
@@ -29,7 +31,7 @@ class APIWarning(CastSupportsError):
         Throttled: _cast_rest_api_exception,
     }
 
-    __schema_cache = {}
+    __schema_cache: dict[str, type[Serializer]] = {}
 
     def __init__(self, detail=None, status=None, code: str = None):
         super().__init__(detail or 'Warning', status or rest_status.HTTP_423_LOCKED)
@@ -50,17 +52,12 @@ class APIWarning(CastSupportsError):
         try:
             serializer = self.__schema_cache[serializer_name]
         except KeyError:
-            from app.base.serializers.base import BaseSerializer  # pylint:disable=R0401
-
-            serializer = type(
+            serializer = schema_serializer(
                 serializer_name,
-                (BaseSerializer,),
-                {
-                    'error': serializers.DictField(
-                        default={'type': self.TYPE_NAME, 'code': self.code},
-                        read_only=True,
-                    )
-                },
+                error=serializers.DictField(
+                    default={'type': self.TYPE_NAME, 'code': self.code},
+                    read_only=True,
+                ),
             )
             self.__schema_cache[serializer_name] = serializer
         return OpenApiResponse(response=serializer, description='\t' + self.detail)

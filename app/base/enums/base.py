@@ -12,7 +12,7 @@ ChoicesMeta = getattr(enums, 'ChoicesMeta')
 __all__ = ['BaseEnumStr', 'BaseEnumInt']
 
 
-class _BaseEnumMeta(ChoicesMeta):
+class _BaseEnumMeta(ChoicesMeta):  # type:ignore
     def __new__(cls, classname, bases, class_dict, **kwargs):
         labels = []
         for index, key in enumerate(getattr(class_dict, '_member_names')):
@@ -37,9 +37,8 @@ class _BaseEnumMeta(ChoicesMeta):
         raise NotImplementedError
 
     def __help_text(self) -> str:
-        self: ChoicesMeta
         transcripts = []
-        for member in self:
+        for member in self:  # type:ignore
             if member.name.lower() == member.label.lower():
                 transcripts.append(f'{member.value} — {member.label}')
             else:
@@ -95,5 +94,5 @@ class BaseEnumInt(_IntegerChoices, metaclass=_IntegerEnumMeta):
     dict_by_value: dict[int, BaseEnumInt]
 
 
-BaseEnumStr: type[_TextChoices | BaseEnumStr | str]
-BaseEnumInt: type[_IntegerChoices | BaseEnumInt | int]
+BaseEnumStr: type[_TextChoices | BaseEnumStr | str]  # type:ignore
+BaseEnumInt: type[_IntegerChoices | BaseEnumInt | int]  # type:ignore

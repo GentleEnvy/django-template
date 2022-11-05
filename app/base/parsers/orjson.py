@@ -4,7 +4,7 @@
 
 # Didn't pip install because https://github.com/brianjbuck/drf_orjson_renderer/issues/20
 
-from typing import IO, Any, Optional
+from typing import IO, Any
 
 import orjson
 from django.conf import settings
@@ -22,7 +22,7 @@ class ORJSONParser(BaseParser):
     def parse(
         self,
         data_or_stram: str | bytes | bytearray | memoryview | IO,
-        media_type: Optional[Any] = None,  # pylint:disable=W0613
+        media_type: Any = None,
         parser_context: Any = None,
     ) -> Any:
         """
@@ -39,7 +39,7 @@ class ORJSONParser(BaseParser):
         """
         parser_context = parser_context or {}
         encoding: str = parser_context.get('encoding', settings.DEFAULT_CHARSET)
-        if hasattr(data_or_stram, 'read'):
+        if isinstance(data_or_stram, IO):
             data = data_or_stram.read()
         else:
             data = data_or_stram

@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from drf_spectacular.drainage import error, get_view_method_names, isolate_view_method
 from drf_spectacular.utils import OpenApiExample, OpenApiParameter
@@ -11,9 +11,7 @@ from rest_framework.settings import api_settings
 __all__ = ['schema_serializer', 'extend_schema']
 
 
-def schema_serializer(
-    _name: str, **fields: serializers.Field
-) -> Type[serializers.Serializer]:
+def schema_serializer(_name: str, **fields: serializers.Field) -> type[Serializer]:
     if not _name.endswith('Serializer'):
         _name += 'Serializer'
     # noinspection PyTypeChecker

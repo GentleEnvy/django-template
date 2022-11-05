@@ -1,5 +1,3 @@
-from typing import Type
-
 from django.db import models
 from django.forms import model_to_dict
 from rest_framework.test import APITestCase
@@ -40,13 +38,15 @@ class BaseTest(APITestCase):
 
     def assert_model(
         self,
-        model: Type[models.Model] | models.Manager | models.QuerySet | models.Model,
+        model: type[models.Model] | models.Manager | models.QuerySet | models.Model,
         instance_data: dict,
         **filters,
     ):
         match model:
             case type():
-                return self.assert_model(model.objects, instance_data, **filters)
+                return self.assert_model(
+                    model.objects, instance_data, **filters  # type:ignore
+                )
             case models.Manager():
                 return self.assert_model(model.all(), instance_data, **filters)
             case models.QuerySet():
