@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 from typing import Any
 
 from drf_spectacular.utils import OpenApiResponse
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-import app.base.exceptions
+from app.base.exceptions.warning import APIWarning
 
 
 class BaseSerializer(serializers.Serializer):
-    WARNINGS: dict[Any, 'app.base.exceptions.APIWarning'] = {}
+    WARNINGS: dict[Any, APIWarning] = {}
     _DESCRIPTION = None
 
     @classmethod
@@ -22,7 +24,7 @@ class BaseSerializer(serializers.Serializer):
         }
 
     def is_valid(self, raise_exception=True):
-        return super().is_valid(raise_exception)
+        return super().is_valid(raise_exception)  # pylint:disable=W0246
 
     def update(self, instance, validated_data):
         pass
@@ -43,8 +45,8 @@ class BaseModelSerializer(serializers.ModelSerializer, BaseSerializer):
         if write_only_fields is not None:
             if not isinstance(write_only_fields, (list, tuple)):
                 raise TypeError(
-                    "The `write_only_fields` option must be a list or tuple. "
-                    "Got %s." % type(write_only_fields).__name__
+                    f"The `write_only_fields` option must be a list or tuple. "
+                    f"Got {type(write_only_fields).__name__}."
                 )
             for field_name in write_only_fields:
                 kwargs = extra_kwargs.get(field_name, {})

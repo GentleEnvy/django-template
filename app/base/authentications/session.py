@@ -15,5 +15,5 @@ class SessionScheme(OpenApiAuthenticationExtension):
     name = 'Cookie'
     priority = -2
 
-    def get_security_definition(self, auto_schema):
+    def get_security_definition(self, _):
         return {'type': 'apiKey', 'in': 'cookie', 'name': settings.SESSION_COOKIE_NAME}

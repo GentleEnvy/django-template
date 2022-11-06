@@ -9,4 +9,6 @@ logging.setLogRecordFactory(CacheMessageLogRecord)
 logger = logging.getLogger('api')
 
 _critical = logger.critical
-logger.critical = lambda *args, **kwargs: _critical(*args, **kwargs, exc_info=True)
+logger.critical = lambda *args, **kws: _critical(  # type:ignore
+    *args, **kws, exc_info=True
+)

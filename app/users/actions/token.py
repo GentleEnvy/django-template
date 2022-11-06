@@ -28,8 +28,8 @@ class POST_UsersTokenAction(BaseAction):
         if user is None:
             try:
                 user = User.objects.get(email=data.email)
-            except User.DoesNotExist:
-                raise PermissionError
+            except User.DoesNotExist as exc:
+                raise PermissionError from exc
         if not user.check_password(data.password):
             raise PermissionError
         if user.type == UserType.BANNED:

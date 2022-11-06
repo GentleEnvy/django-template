@@ -6,12 +6,10 @@
 
 import functools
 import operator
-import uuid
 from decimal import Decimal
 from typing import Any, Optional
 
 import orjson
-from django.utils.functional import Promise
 from rest_framework.renderers import BaseRenderer
 from rest_framework.settings import api_settings
 
@@ -44,22 +42,17 @@ class ORJSONRenderer(BaseRenderer):
         :param obj: Object of any type to be converted.
         :return: native python object
         """
-
         if isinstance(obj, dict):
             return dict(obj)
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return list(obj)
-        elif isinstance(obj, Decimal):
-            if api_settings.COERCE_DECIMAL_TO_STRING:
-                return str(obj)
-            else:
-                return float(obj)
-        elif isinstance(obj, (str, uuid.UUID, Promise)):
-            return str(obj)
-        elif hasattr(obj, 'tolist'):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if hasattr(obj, 'tolist'):
             return obj.tolist()
-        elif hasattr(obj, '__iter__'):
+        if hasattr(obj, '__iter__'):
             return list(item for item in obj)
+        return str(obj)
 
     def render(
         self,
@@ -79,33 +72,13 @@ class ORJSONRenderer(BaseRenderer):
         """
         if data is None:
             return b''
-
         renderer_context = renderer_context or {}
-
-        # By default, this function will use its own version of `default()` in
-        # order to safely serialize known Django types like QuerySets. If you
-        # know you won't need this you can pass `None` to the renderer_context
-        # ORJSON will only serialize native Python built-in types. If you know
-        # that you need to serialize additional types such as Numpy you can
-        # override the default here.
-        #
-        # Instead of the full if-else, the temptation here is to optimize
-        # this block by calling:
-        #
-        # `default = renderer_context.get("default_function", self.default)`
-        #
-        # Don't do that here because you will lose the ability to pass `None`
-        # to ORJSON.
         if 'default_function' not in renderer_context:
             default = self.default
         else:
             default = renderer_context['default_function']
-
-        # If `indent` is provided in the context, then pretty print the result.
-        # E.g. If we're being called by RestFramework's BrowsableAPIRenderer.
         options = self.options
         if media_type == self.html_media_type:
             options |= orjson.OPT_INDENT_2
-
         serialized: bytes = orjson.dumps(data, default=default, option=options)
         return serialized

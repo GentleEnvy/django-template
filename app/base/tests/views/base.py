@@ -1,7 +1,10 @@
-from typing import Any, Callable
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
 from urllib.parse import urlencode
 
-from app.base.exceptions import APIWarning
+from app.base.exceptions.base import APIException
 from app.base.tests.base import BaseTest
 from app.users.models import Token, User
 from app.users.tests.factories.token import TokenFactory
@@ -71,7 +74,7 @@ class BaseViewTest(BaseTest):
     def _test(
         self,
         method: str,
-        exp_data: dict[str, Any] | APIWarning = None,
+        exp_data: dict[str, Any] | APIException | None = None,
         data: dict[str, Any] = None,
         status: int = None,
         path: str = None,
@@ -81,7 +84,7 @@ class BaseViewTest(BaseTest):
             status = status or {'post': 201, 'delete': 204}.get(method, 200)
         else:
             status = 204
-        if isinstance(exp_data, APIWarning):
+        if isinstance(exp_data, APIException):
             status = exp_data.status
             exp_data = exp_data.serialize()
         self.assert_response(response, status, exp_data)

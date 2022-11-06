@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import datetime
-from typing import Callable, Final
+from collections.abc import Callable
+from typing import Final
 
 from factory import Faker as _FactoryFaker
 from faker import Faker as _Faker

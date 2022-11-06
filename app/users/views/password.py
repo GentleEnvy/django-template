@@ -53,6 +53,6 @@ class UsersPasswordView(BaseView):
             token = action.run(
                 action.InEntity(request=self.request, **serializer.validated_data)
             ).token
-        except TimeoutError:
-            raise serializer.WARNINGS[408]
+        except TimeoutError as exc:
+            raise serializer.WARNINGS[408] from exc
         return Response({'token': token})

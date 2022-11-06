@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import EnumMeta, unique
-from typing import Type
 
 from django.db.models import IntegerChoices as _IntegerChoices
 from django.db.models import TextChoices as _TextChoices
@@ -13,7 +12,7 @@ ChoicesMeta = getattr(enums, 'ChoicesMeta')
 __all__ = ['BaseEnumStr', 'BaseEnumInt']
 
 
-class _BaseEnumMeta(ChoicesMeta):
+class _BaseEnumMeta(ChoicesMeta):  # type:ignore
     def __new__(cls, classname, bases, class_dict, **kwargs):
         labels = []
         for index, key in enumerate(getattr(class_dict, '_member_names')):
@@ -25,8 +24,9 @@ class _BaseEnumMeta(ChoicesMeta):
         )
         self.dict_by_value = self._value2label_map_ = dict(
             zip(self._value2member_map_, labels)
-        )
-        self.dict_by_name = self._member_map_
+        )  # pylint:disable=W0212
+        self.dict_by_name = self._member_map_  # pylint:disable=W0212
+        # pylint:disable=W0212
         self.label = property(lambda self_: self._value2label_map_.get(self_.value))
         self.help_text = self.__help_text()
         # noinspection PyTypeChecker
@@ -37,9 +37,8 @@ class _BaseEnumMeta(ChoicesMeta):
         raise NotImplementedError
 
     def __help_text(self) -> str:
-        self: ChoicesMeta
         transcripts = []
-        for member in self:
+        for member in self:  # type:ignore
             if member.name.lower() == member.label.lower():
                 transcripts.append(f'{member.value} — {member.label}')
             else:
@@ -95,5 +94,5 @@ class BaseEnumInt(_IntegerChoices, metaclass=_IntegerEnumMeta):
     dict_by_value: dict[int, BaseEnumInt]
 
 
-BaseEnumStr: Type[_TextChoices | BaseEnumStr | str]
-BaseEnumInt: Type[_IntegerChoices | BaseEnumInt | int]
+BaseEnumStr: type[_TextChoices | BaseEnumStr | str]  # type:ignore
+BaseEnumInt: type[_IntegerChoices | BaseEnumInt | int]  # type:ignore

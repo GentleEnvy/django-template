@@ -11,8 +11,8 @@ class _EmailUniqueValidator(UniqueValidator):
     def __call__(self, value, serializer_field):
         try:
             super().__call__(value, serializer_field)
-        except ValidationError:
-            raise POST_UsersRegisterSerializer.WARNINGS[409]
+        except ValidationError as exc:
+            raise POST_UsersRegisterSerializer.WARNINGS[409] from exc
 
 
 class POST_UsersRegisterSerializer(BaseModelSerializer):

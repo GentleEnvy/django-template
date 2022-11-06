@@ -38,7 +38,7 @@ def _cut_back(value, max_length=200):
                     f'{value[:max_length // 2]}<<<{length - max_length} more '
                     f'{type_name}>>> {value[-max_length // 2:]}'
                 )
-            except Exception:
+            except Exception:  # pylint:disable=W0703
                 return f'<<<{type_name} of length {length}>>>'
         return value
     if len(str(value)) > max_length:
@@ -83,18 +83,18 @@ class LogMiddleware(MiddlewareMixin):
                     log_data['request']['body'] = _cut_back_dict(
                         json.loads(request.req_body)
                     )
-                except Exception:
+                except Exception:  # pylint:disable=W0703
                     log_data['request']['body'] = _cut_back(request.req_body)
             else:
                 try:
                     log_data['request']['body'] = _cut_back_dict(dict(request.req_body))
-                except Exception:
+                except Exception:  # pylint:disable=W0703
                     log_data['request']['body'] = _cut_back(request.req_body)
                 try:
                     log_data['request']['files'] = {
                         k: [e.name for e in f] for k, f in dict(request.FILES).items()
                     }
-                except Exception:
+                except Exception:  # pylint:disable=W0703
                     log_data['request']['files'] = {}
                 if not log_data['request']['files']:
                     del log_data['request']['files']
@@ -116,14 +116,14 @@ class LogMiddleware(MiddlewareMixin):
                 try:
                     log_data['response']['body'] = _cut_back_dict(dict(response.data))
                     return log_data
-                except Exception:
+                except Exception:  # pylint:disable=W0703
                     pass
             if hasattr(response, 'content'):
                 try:
                     log_data['response']['body'] = _cut_back_dict(
                         dict(response.content)
                     )
-                except Exception:
+                except Exception:  # pylint:disable=W0703
                     log_data['response']['body'] = _cut_back(response.content)
         return log_data
 

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Type
-
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import OpenApiResponse
 from rest_framework import exceptions, status
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.generics import GenericAPIView
@@ -30,25 +29,19 @@ def _exception_handler(exception):
         set_rollback()
         if settings.DEBUG and isinstance(exception, MethodNotAllowed):
             return Response(str(exception))
-        try:
+        try:  # MAYBE: use isinstance
             raise exception
-        except APIWarning as e:
-            api_error = e
-        except ClientError as e:
-            api_error = e
-        except CriticalError as e:
-            api_error = e
+        except (APIWarning, ClientError, CriticalError) as exc:
+            error = exc  # pylint:disable=W0621
         except tuple(APIWarning.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = APIWarning.cast_exception(exception_to_cast)
+            error = APIWarning.cast_exception(exception_to_cast)
         except tuple(ClientError.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = ClientError.cast_exception(exception_to_cast)
+            error = ClientError.cast_exception(exception_to_cast)
         except tuple(CriticalError.EXCEPTION__CAST.keys()) as exception_to_cast:
-            api_error = CriticalError.cast_exception(exception_to_cast)
+            error = CriticalError.cast_exception(exception_to_cast)
 
-        error = api_error
-
-    except Exception as e:
-        error = CriticalError(str(e))
+    except Exception as exc:  # pylint:disable=W0703
+        error = CriticalError(str(exc))
 
     error.log()
     return error.to_response()
@@ -58,11 +51,11 @@ class BaseView(GenericAPIView):
     lookup_field = 'id'
     ordering = 'id'
     serializer_class = BaseSerializer
-    permission_classes = []
+    permission_classes: list[type[BasePermission]] = []
     serializer_map: dict[
-        str, tuple[int, Type[BaseSerializer]] | Type[BaseSerializer]
+        str, tuple[int, type[BaseSerializer]] | type[BaseSerializer]
     ] = {}
-    permissions_map: dict[str, list[Type[BasePermission]]] = {}
+    permissions_map: dict[str, list[type[BasePermission]]] = {}
 
     @property
     def method(self) -> str:
@@ -71,14 +64,13 @@ class BaseView(GenericAPIView):
     @classmethod
     def _extract_serializer_class_with_status(
         cls, method_name: str
-    ) -> tuple[int, Type[BaseSerializer]] | None:
+    ) -> tuple[int, type[BaseSerializer]] | None:
         serializer_class = cls.serializer_map.get(method_name)
-        if serializer_class and issubclass(serializer_class, BaseSerializer):
-            http_status = status_by_method(method_name)
-            return http_status, serializer_class
-        return serializer_class
+        if serializer_class is None or isinstance(serializer_class, tuple):
+            return serializer_class
+        return status_by_method(method_name), serializer_class
 
-    def get_serializer_class(self) -> Type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         serializer_class = self._extract_serializer_class_with_status(self.method)
         if serializer_class is None:
             return self.serializer_class
@@ -96,7 +88,7 @@ class BaseView(GenericAPIView):
     def get_object(self) -> BaseModel:
         return super().get_object()
 
-    def get_permission_classes(self) -> list[Type[BasePermission]]:
+    def get_permission_classes(self) -> list[type[BasePermission]]:
         return self.permission_classes + self.permissions_map.get(self.method, [])
 
     def get_permissions(self) -> list[BasePermission]:
@@ -121,12 +113,12 @@ class BaseView(GenericAPIView):
                 method = getattr(cls, method_name)
             except AttributeError:
                 continue
-            responses = {}
+            responses: dict[int, OpenApiResponse] = {}
 
             extracted = cls._extract_serializer_class_with_status(method_name)
             if extracted:
                 serializer_class = extracted[1]
-                if get_schema := getattr(serializer_class, 'get_schema'):
+                if get_schema := getattr(serializer_class, 'get_schema', None):
                     responses |= get_schema(extracted[0])
 
             if IsAuthenticatedPermission in cls.get_permission_classes(cls()):

@@ -1,7 +1,7 @@
 [tool.black]
 skip-string-normalization = true
 
-[tool.isort]
-profile='black'
-atomic = true
-line_length = 88
+[tool.vulture]
+paths = ['.']
+min_confidence = 90
+sort_by_size = true

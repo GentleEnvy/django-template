@@ -16,7 +16,7 @@ class EmailVerificationService:
 
     def _update_context(self, email_message: BaseEmailMessage):
         context = email_message.context
-        for k, v in settings.__dict__.items():
+        for k, _ in settings.__dict__.items():
             if k.startswith('VERIFICATION_'):
                 context.setdefault(k.lower()[13:])
         email = email_message.to[0]

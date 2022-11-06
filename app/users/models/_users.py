@@ -26,7 +26,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = EMAIL_FIELD
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: list[str] = []
 
     @property
     def is_staff(self):

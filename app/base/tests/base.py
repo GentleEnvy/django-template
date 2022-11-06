@@ -1,5 +1,3 @@
-from typing import Type
-
 from django.db import models
 from django.forms import model_to_dict
 from rest_framework.test import APITestCase
@@ -25,13 +23,13 @@ class BaseTest(APITestCase):
                     if exp_value(value) is False:
                         self.fail(f'{exp_key = }, {value = }')
                 else:
-                    self.assert_is_instance(value, type(exp_value))
                     if isinstance(value, dict):
                         dfs(value, exp_value)
                     else:
                         self.assert_equal(value, exp_value)
 
-            [visit(*items) for items in inner_exp_json.items()]
+            for items in inner_exp_json.items():
+                visit(*items)
 
         dfs(json, exp_json)
 
@@ -40,13 +38,15 @@ class BaseTest(APITestCase):
 
     def assert_model(
         self,
-        model: Type[models.Model] | models.Manager | models.QuerySet | models.Model,
+        model: type[models.Model] | models.Manager | models.QuerySet | models.Model,
         instance_data: dict,
         **filters,
     ):
         match model:
             case type():
-                return self.assert_model(model.objects, instance_data, **filters)
+                return self.assert_model(
+                    model.objects, instance_data, **filters  # type:ignore
+                )
             case models.Manager():
                 return self.assert_model(model.all(), instance_data, **filters)
             case models.QuerySet():
@@ -56,8 +56,8 @@ class BaseTest(APITestCase):
                     )
                 except model.model.DoesNotExist:
                     self.fail(
-                        f'{model.model.__name__} matching query ({filters}) does not '
-                        f'exists'
+                        f"{model.model.__name__} matching query ({filters}) does not "
+                        f"exists"
                     )
             case _:
                 self.assert_instance(model, instance_data)

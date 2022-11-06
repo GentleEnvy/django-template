@@ -20,7 +20,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         raw_password = kwargs['password']
-        obj = super(UserFactory, cls)._create(
+        obj = super()._create(
             model_class, *args, **kwargs | {'password': make_password(raw_password)}
         )
         obj.raw_password = raw_password

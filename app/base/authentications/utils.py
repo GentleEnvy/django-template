@@ -9,5 +9,5 @@ def get_header(request):
         return None
     try:
         return header.decode()
-    except UnicodeError:
-        raise ClientError('Неверная кодировка заголовка с токеном')
+    except UnicodeError as exc:
+        raise ClientError('Неверная кодировка заголовка с токеном') from exc

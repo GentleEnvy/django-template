@@ -23,8 +23,8 @@ class POST_UsersRegisterResendSerializer(BaseModelSerializer):
     def validate(self, attrs):
         try:
             self.instance = User.objects.get(email=attrs['email'])
-        except User.DoesNotExist:
-            raise self.WARNINGS[404]
+        except User.DoesNotExist as exc:
+            raise self.WARNINGS[404] from exc
         if self.instance.is_active:
             raise self.WARNINGS[409]
         return attrs
